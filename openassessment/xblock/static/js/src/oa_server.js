@@ -64,7 +64,6 @@ if (typeof OpenAssessment.Server == "undefined" || !OpenAssessment.Server) {
                     dataType: "html"
                 }).done(function(data) {
                     defer.resolveWith(this, [data]);
-                    that.renderLatex(data);
                 }).fail(function(data) {
                     defer.rejectWith(this, [gettext('This section could not be loaded.')]);
                 });
@@ -78,11 +77,9 @@ if (typeof OpenAssessment.Server == "undefined" || !OpenAssessment.Server) {
             element: The element to modify.
         **/
         renderLatex: function(element) {
-            $('.allow--latex', element).each(
-                function() {
-                    MathJax.Hub.Queue(['Typeset', MathJax.Hub, this]);
-                }
-            );
+            element.filter(".allow--latex").each(function() {
+                MathJax.Hub.Queue(['Typeset', MathJax.Hub, this]);
+            });
         },
 
         /**
@@ -111,7 +108,6 @@ if (typeof OpenAssessment.Server == "undefined" || !OpenAssessment.Server) {
                     data: {continue_grading: true}
                 }).done(function(data) {
                         defer.resolveWith(this, [data]);
-                        view.renderLatex(data);
                     }).fail(function(data) {
                         defer.rejectWith(this, [gettext('This section could not be loaded.')]);
                     });
@@ -121,14 +117,14 @@ if (typeof OpenAssessment.Server == "undefined" || !OpenAssessment.Server) {
         /**
          Load the Student Info section in Staff Info.
          **/
-        studentInfo: function(student_id) {
+        studentInfo: function(student_username) {
             var url = this.url('render_student_info');
             return $.Deferred(function(defer) {
                 $.ajax({
                     url: url,
                     type: "POST",
                     dataType: "html",
-                    data: {student_id: student_id}
+                    data: {student_username: student_username}
                 }).done(function(data) {
                         defer.resolveWith(this, [data]);
                     }).fail(function(data) {
