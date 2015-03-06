@@ -136,6 +136,15 @@ msgstr "Размер файла не должен превышать 5 Мб."
 msgid "File must be an image."
 msgstr "Файл должен быть изображением."
 
+#: openassessment/xblock/static/js/openassessment-lms.min.js
+#: openassessment/xblock/static/js/src/lms/oa_response.js
+msgid ""
+"You're about to submit your response for this assignment. "
+"After you submit this response, you can't change it or submit a new response."
+msgstr ""
+"Вы собираетесь отправить свой ответ на данное задание. "
+"После отправки ответа Вы не сможете изменить его или отправить новый ответ."
+
 #: openassessment/xblock/static/js/openassessment-studio.min.js:1
 #: openassessment/xblock/static/js/src/studio/oa_container_item.js:39
 msgid "Unnamed Option"
