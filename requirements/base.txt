@@ -6,7 +6,7 @@
 git+https://github.com/edx/XBlock.git@9c634481dfc85a17dcb3351ca232d7098a38e10e#egg=XBlock
 
 # edx-submissions
-git+https://github.com/edx/edx-submissions.git@7d19adcc49045b225aa55441604928905b018b30#egg=edx-submissions
+git+https://github.com/lektorium-llc/edx-submissions.git@5edf380a7d605cd5b660535a244f3ef7ee46b3f1#egg=edx-submissions
 
 # Third Party Requirements
 boto>=2.32.1,<3.0.0
@@ -27,4 +27,4 @@ South==0.7.6
 voluptuous==0.8.5
 
 # AI grading
-git+https://github.com/edx/ease.git@bcb36e84b5ffa4ac00813577079dd6eef4fff566#egg=ease
+git+https://github.com/lektorium-llc/ease.git@90c0a6d42f3875b9b5be55d05a6cd8ac9589735f#egg=ease
