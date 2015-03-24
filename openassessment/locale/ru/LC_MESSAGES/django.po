@@ -98,7 +98,7 @@ msgstr "Требуется"
 #: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:101
 #: openassessment/templates/openassessmentblock/student_training/student_training.html:123
 msgid "points"
-msgstr "очков"
+msgstr "балл(ов)"
 
 #: openassessment/templates/openassessmentblock/oa_rubric.html:41
 #: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:109
@@ -961,7 +961,7 @@ msgstr "Невозможно загрузить инструкции к данн
 
 #: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:16
 msgid "Assess Peers"
-msgstr "Оценить других участников"
+msgstr "Оцените других участников"
 
 #. Translators: This string displays a date to the user, then tells them the
 #. time until that date.  Example: "available August 13th, 2014 (in 5 days and
@@ -971,7 +971,7 @@ msgstr "Оценить других участников"
 #: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:16
 #, python-format
 msgid "available <span class=\"date\">%(start_date)s (in %(time_until)s)</span>"
-msgstr "будет доступно <span class=\"date\">%(start_date)s (через %(time_until)s)</span>"
+msgstr "Будет доступно <span class=\"date\">%(start_date)s (через %(time_until)s)</span>"
 
 #. Translators: This string displays a date to the user, then tells them the
 #. time until that date.  Example: "due August 13th, 2014 (in 5 days and 45
@@ -979,7 +979,7 @@ msgstr "будет доступно <span class=\"date\">%(start_date)s (чер�
 #: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:25
 #, python-format
 msgid "due <span class=\"date\">%(due_date)s (in %(time_until)s)</span>"
-msgstr "необходимо завершить к <span class=\"date\">%(due_date)s (в течение %(time_until)s)</span>"
+msgstr "Необходимо завершить к <span class=\"date\">%(due_date)s (в течение %(time_until)s)</span>"
 
 #: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:33
 #: openassessment/templates/openassessmentblock/peer/oa_peer_closed.html:10
@@ -1403,9 +1403,45 @@ msgstr "Информация о студенте"
 msgid "Student Response"
 msgstr "Ответ студента"
 
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:15
+#, python-format
+msgid ""
+"\n"
+"                            Student submission removed by %(removed_by_username)s on %(removed_datetime)s\n"
+"                        "
+msgstr ""
+"\nОтвет студента удалён пользователем %(removed_by_username)s %(removed_datetime)s"
+
 #: openassessment/templates/openassessmentblock/staff_debug/student_info.html:20
+#, python-format
+msgid ""
+"\n"
+"                            Comments: %(comments)s\n"
+"                        "
+msgstr "\nКомментарии: %(comments)s"
+
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:31
 msgid "The image associated with this response"
-msgstr "Изобржение, прикреплённое к данному ответу"
+msgstr "Изображение, прикреплённое к данному ответу"
+
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:44
+msgid "Remove submission from peer grading"
+msgstr "Удаление ответа участника"
+
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:58
+msgid ""
+"Caution: Removing a student's submission is irreversible. It should only "
+"be used in cases where the student's submission was inappropriate."
+msgstr "Внимание: удаление ответа студента необратимо. Данную возможность "
+"следует использовать только для неприемлемых ответов."
+
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:64
+msgid "Comments:"
+msgstr "Комментарии:"
+
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:78
+msgid "Remove submission"
+msgstr "Удалить ответ"
 
 #: openassessment/templates/openassessmentblock/staff_debug/student_info.html:29
 msgid "Peer Assessments for This Student"

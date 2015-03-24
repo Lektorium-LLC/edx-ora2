@@ -241,3 +241,6 @@ msgid ""
 "saved."
 msgstr ""
 "Изменения в шагах, которые не включены в задание, не сохранятся."
+
+msgid "The submission could not be removed from the grading pool."
+msgstr "Не удаётся удалить ответ из хранилища."
