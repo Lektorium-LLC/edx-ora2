@@ -16,6 +16,7 @@ from django.db import models, transaction, DatabaseError
 from django.dispatch import receiver
 from django_extensions.db.fields import UUIDField
 from django.utils.timezone import now
+from django.utils.translation import ugettext_lazy as _
 from model_utils import Choices
 from model_utils.models import StatusModel, TimeStampedModel
 from submissions import api as sub_api
@@ -80,6 +81,16 @@ class AssessmentWorkflow(TimeStampedModel, StatusModel):
     ]
 
     STATUS_VALUES = STEPS + STATUSES
+
+    STATUS_VERBOSE_NAMES = {
+        "peer": _("Peer Assessment"),
+        "self": _("Self Assessment"),
+        "training": _("Student Training"),
+        "ai": _("AI Assessment"),
+        'waiting': _("Waiting"),
+        "done": _("Done"),
+        "cancelled": _("Cancelled"),
+    }
 
     STATUS = Choices(*STATUS_VALUES)  # implicit "status" field
 

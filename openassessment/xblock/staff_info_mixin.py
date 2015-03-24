@@ -160,7 +160,7 @@ class StaffInfoMixin(object):
             __, __, start_date, due_date = self.is_closed(step=step, course_staff=False)
 
             context['step_dates'].append({
-                'step': step,
+                'step': self.get_step_verbose_name(step),
                 'start': start_date if start_date > DISTANT_PAST else None,
                 'due': due_date if due_date < DISTANT_FUTURE else None,
             })

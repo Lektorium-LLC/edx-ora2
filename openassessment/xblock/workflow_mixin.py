@@ -141,10 +141,10 @@ class WorkflowMixin(object):
                 12
             >>> status_counts
                 [
-                    {"status": "peer", "count": 2},
-                    {"status": "self", "count": 1},
-                    {"status": "waiting": "count": 4},
-                    {"status": "done", "count": 5}
+                    {"status": "Peer Assessment", "count": 2},
+                    {"status": "Self Assessment", "count": 1},
+                    {"status": "Waiting": "count": 4},
+                    {"status": "Done", "count": 5}
                 ]
         """
         student_item = self.get_student_item_dict()

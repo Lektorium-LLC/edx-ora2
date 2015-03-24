@@ -221,7 +221,7 @@ msgstr ""
 
 #: openassessment/templates/openassessmentblock/edit/oa_edit.html:140
 msgid ""
-"In this assignment, you can include steps for Шаг: Обучение студентовstudent training, peer "
+"In this assignment, you can include steps for student training, peer "
 "assessment, self assessment, and example based assessment. Select the steps "
 "that you want below, and then drag them into the order that you want. If you"
 " include an example based assessment step, it must precede all other steps. "
@@ -568,7 +568,7 @@ msgstr "Ваше изображение"
 #: openassessment/templates/openassessmentblock/response/oa_response_submitted.html:53
 #: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:58
 msgid "The image associated with your submission."
-msgstr "Изобржение, прикреплённое к Вашему ответу."
+msgstr "Изображение, прикреплённое к Вашему ответу."
 
 #: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:47
 msgid "Assessments of Your Response"
@@ -789,7 +789,7 @@ msgstr "%(num_points)s баллов"
 #: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:81
 #: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:65
 msgid "The image associated with your peer's submission."
-msgstr "Изобржение, прикреплённое к ответу участника."
+msgstr "Изображение, прикреплённое к ответу участника."
 
 #: openassessment/templates/openassessmentblock/leaderboard/oa_leaderboard_waiting.html:15
 msgid ""
@@ -1432,7 +1432,7 @@ msgstr "Удаление ответа участника"
 msgid ""
 "Caution: Removing a student's submission is irreversible. It should only "
 "be used in cases where the student's submission was inappropriate."
-msgstr "Внимание: удаление ответа студента необратимо. Данную возможность "
+msgstr "Будьте осторожны: удаление ответа студента необратимо. Данную возможность "
 "следует использовать только для неприемлемых ответов."
 
 #: openassessment/templates/openassessmentblock/staff_debug/student_info.html:64
@@ -1597,6 +1597,7 @@ msgid "An unexpected error occurred."
 msgstr "Произошла непредвиденная ошибка"
 
 #: openassessment/xblock/grade_mixin.py:188
+#: openassessment/workflow/models.py
 msgid "Peer Assessment"
 msgstr "Оценивание участниками"
 
@@ -1920,3 +1921,27 @@ msgstr ""
 #: openassessment/xblock/validation.py:354
 msgid "Leaderboard number is invalid."
 msgstr "Количество лучших ответов задано некорректно."
+
+#: openassessment/workflow/models.py
+msgid "Student Training"
+msgstr "Обучение оцениванию"
+
+#: openassessment/workflow/models.py
+msgid "AI Assessment"
+msgstr "Автоматизированное оценивание"
+
+#: openassessment/workflow/models.py
+msgid "Waiting"
+msgstr "Ожидание"
+
+#: openassessment/workflow/models.py
+msgid "Done"
+msgstr "Закончено"
+
+#: openassessment/workflow/models.py
+msgid "Cancelled"
+msgstr "Удалено"
+
+#: openassessment/xblock/openassessmentblock.py
+msgid "Submission"
+msgstr "Отправка ответов"

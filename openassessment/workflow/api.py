@@ -303,7 +303,7 @@ def get_status_counts(course_id, item_id, steps):
     if 'ai' in statuses: statuses.remove('ai')
     return [
         {
-            "status": status,
+            "status": AssessmentWorkflow.STATUS_VERBOSE_NAMES.get(status, status),
             "count": AssessmentWorkflow.objects.filter(
                 status=status,
                 course_id=course_id,
