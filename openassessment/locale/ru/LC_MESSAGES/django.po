@@ -1010,7 +1010,7 @@ msgid ""
 "\n"
 "                    In Progress (%(num_graded)s of %(num_must_grade)s)\n"
 "                "
-msgstr "\n                    В процессе выполнения (%(num_graded)s из %(num_must_grade)s)\n                "
+msgstr "\n                    Выполняется (%(num_graded)s из %(num_must_grade)s)\n                "
 
 #: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:51
 #: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:38
@@ -1130,7 +1130,7 @@ msgid ""
 "          In Progress (%(num_graded)s of %(num_must_grade)s)\n"
 "        "
 msgstr ""
-"\n          В процессе выполнения (%(num_graded)s из %(num_must_grade)s)\n        "
+"\n          Выполняется (%(num_graded)s из %(num_must_grade)s)\n        "
 
 #: openassessment/templates/openassessmentblock/peer/oa_peer_waiting.html:28
 msgid "Waiting for Peer Responses"
@@ -1160,7 +1160,7 @@ msgstr "необходимо завершить к <span class=\"date\"> %(due_d
 #: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:31
 #: openassessment/templates/openassessmentblock/student_training/student_training.html:32
 msgid "In Progress"
-msgstr "В процессе выполнения"
+msgstr "Выполняется"
 
 #: openassessment/templates/openassessmentblock/response/oa_response.html:42
 #: openassessment/templates/openassessmentblock/response/oa_response.html:56
