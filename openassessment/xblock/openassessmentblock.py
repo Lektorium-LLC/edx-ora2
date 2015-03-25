@@ -299,8 +299,6 @@ class OpenAssessmentBlock(
         Returns:
             bool
         """
-        if True:
-            return True
         if hasattr(self, 'xmodule_runtime'):
             return getattr(self.xmodule_runtime, 'user_is_staff', False)
         else:
