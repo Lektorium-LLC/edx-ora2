@@ -282,7 +282,7 @@ class TestAssessmentWorkflowApi(CacheResetTest):
             "peer-problem",
             ["ai", "training", "peer", "self"]
         )
-        self.assertEqual(counts, [
+        self._assert_counts_equal_raw(counts, [
             {"status": "training", "count": 0},
             {"status": "peer", "count": 0},
             {"status": "self", "count": 0},
@@ -290,6 +290,7 @@ class TestAssessmentWorkflowApi(CacheResetTest):
             {"status": "done", "count": 0},
             {"status": "cancelled", "count": 0},
         ])
+
 
         self.assertFalse("ai" in [count['status'] for count in counts])
 
@@ -315,7 +316,7 @@ class TestAssessmentWorkflowApi(CacheResetTest):
             "peer-problem",
             ["ai", "training", "peer", "self"]
         )
-        self.assertEqual(counts, [
+        self._assert_counts_equal_raw(counts, [
             {"status": "training", "count": 1},
             {"status": "peer", "count": 1},
             {"status": "self", "count": 2},
@@ -345,6 +346,16 @@ class TestAssessmentWorkflowApi(CacheResetTest):
             ["ai", "training", "peer", "self"]
         )
         self.assertEqual(counts, updated_counts)
+
+    def _assert_counts_equal_raw(self, real_counts, raw_counts):
+        raw_counts_translated = [
+            {
+                'status': AssessmentWorkflow.STATUS_VERBOSE_NAMES.get(item['status']),
+                'count': item['count']
+            }
+            for item in raw_counts
+        ]
+        self.assertEqual(real_counts, raw_counts_translated)
 
     @override_settings(ORA2_ASSESSMENTS={'self': 'not.a.module'})
     def test_unable_to_load_api(self):
