@@ -5,14 +5,19 @@ import datetime
 import urllib
 from mock import Mock, patch
 from django.test.utils import override_settings
+
+import ddt
 from openassessment.assessment.api import peer as peer_api
 from openassessment.assessment.api import self as self_api
 from openassessment.assessment.api import ai as ai_api
 from openassessment.workflow import api as workflow_api
 from openassessment.assessment.errors.ai import AIError, AIGradingInternalError
-from openassessment.fileupload.api import FileUploadInternalError
+from openassessment.fileupload.exceptions import FileUploadInternalError
 from submissions import api as sub_api
+
+from openassessment.xblock.data_conversion import prepare_submission_for_serialization
 from openassessment.xblock.test.base import scenario, XBlockHandlerTestCase
+from xblock.core import XBlock
 
 ALGORITHM_ID = 'fake'
 
@@ -43,6 +48,14 @@ ASSESSMENT_DICT = {
 }
 
 
+class NullUserService(object):
+    """
+    A simple implementation of the runtime "user" service.
+    """
+    def get_anonymous_user_id(self, username, course_id):
+        return username
+
+
 class TestCourseStaff(XBlockHandlerTestCase):
     """
     Tests for course staff debug panel.
@@ -66,7 +79,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
     @scenario('data/basic_scenario.xml', user_id='Bob')
     def test_course_staff_debug_info(self, xblock):
         # If we're not course staff, we shouldn't see the debug info
-        xblock.xmodule_runtime =  self._create_mock_runtime(
+        xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, False, False, "Bob"
         )
         resp = self.request(xblock, 'render_staff_info', json.dumps({}))
@@ -80,7 +93,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
     @scenario('data/basic_scenario.xml', user_id='Bob')
     def test_course_student_debug_info(self, xblock):
         # If we're not course staff, we shouldn't see the debug info
-        xblock.xmodule_runtime =  self._create_mock_runtime(
+        xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, False, False, "Bob"
         )
         resp = self.request(xblock, 'render_student_info', json.dumps({}))
@@ -96,7 +109,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
         # If we are in Studio preview mode, don't show the staff debug info
         # In this case, the runtime will tell us that we're staff,
         # but no user ID will be set.
-        xblock.xmodule_runtime =  self._create_mock_runtime(
+        xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, True, False, "Bob"
         )
 
@@ -112,7 +125,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
     @scenario('data/staff_dates_scenario.xml', user_id='Bob')
     def test_staff_debug_dates_table(self, xblock):
         # Simulate that we are course staff
-        xblock.xmodule_runtime =  self._create_mock_runtime(
+        xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, True, False, "Bob"
         )
 
@@ -137,7 +150,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
     @scenario('data/basic_scenario.xml', user_id='Bob')
     def test_staff_debug_dates_distant_past_and_future(self, xblock):
         # Simulate that we are course staff
-        xblock.xmodule_runtime =  self._create_mock_runtime(
+        xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, True, False, "Bob"
         )
 
@@ -149,7 +162,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
     @scenario('data/basic_scenario.xml', user_id='Bob')
     def test_staff_debug_student_info_no_submission(self, xblock):
         # Simulate that we are course staff
-        xblock.xmodule_runtime =  self._create_mock_runtime(
+        xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, True, False, "Bob"
         )
         request = namedtuple('Request', 'params')
@@ -161,14 +174,17 @@ class TestCourseStaff(XBlockHandlerTestCase):
     @scenario('data/peer_only_scenario.xml', user_id='Bob')
     def test_staff_debug_student_info_peer_only(self, xblock):
         # Simulate that we are course staff
-        xblock.xmodule_runtime =  self._create_mock_runtime(
+        xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, True, False, "Bob"
         )
+        xblock.runtime._services['user'] = NullUserService()
 
         bob_item = STUDENT_ITEM.copy()
         bob_item["item_id"] = xblock.scope_ids.usage_id
         # Create a submission for Bob, and corresponding workflow.
-        submission = sub_api.create_submission(bob_item, {'text':"Bob Answer"})
+        submission = sub_api.create_submission(
+            bob_item, prepare_submission_for_serialization(("Bob Answer 1", "Bob Answer 2"))
+        )
         peer_api.on_start(submission["uuid"])
         workflow_api.create_workflow(submission["uuid"], ['peer'])
 
@@ -191,7 +207,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
 
         # Now Bob should be fully populated in the student info view.
         path, context = xblock.get_student_info_path_and_context("Bob")
-        self.assertEquals("Bob Answer", context['submission']['answer']['text'])
+        self.assertEquals("Bob Answer 1", context['submission']['answer']['parts'][0]['text'])
         self.assertIsNone(context['self_assessment'])
         self.assertEquals("openassessmentblock/staff_debug/student_info.html", path)
 
@@ -201,11 +217,13 @@ class TestCourseStaff(XBlockHandlerTestCase):
         xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, True, False, "Bob"
         )
-
+        xblock.runtime._services['user'] = NullUserService()
         bob_item = STUDENT_ITEM.copy()
         bob_item["item_id"] = xblock.scope_ids.usage_id
         # Create a submission for Bob, and corresponding workflow.
-        submission = sub_api.create_submission(bob_item, {'text':"Bob Answer"})
+        submission = sub_api.create_submission(
+            bob_item, prepare_submission_for_serialization(("Bob Answer 1", "Bob Answer 2"))
+        )
         peer_api.on_start(submission["uuid"])
         workflow_api.create_workflow(submission["uuid"], ['self'])
 
@@ -220,7 +238,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
         )
 
         path, context = xblock.get_student_info_path_and_context("Bob")
-        self.assertEquals("Bob Answer", context['submission']['answer']['text'])
+        self.assertEquals("Bob Answer 1", context['submission']['answer']['parts'][0]['text'])
         self.assertEquals([], context['peer_assessments'])
         self.assertEquals("openassessmentblock/staff_debug/student_info.html", path)
 
@@ -237,11 +255,14 @@ class TestCourseStaff(XBlockHandlerTestCase):
         xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, True, False, "Bob"
         )
+        xblock.runtime._services['user'] = NullUserService()
 
         bob_item = STUDENT_ITEM.copy()
         bob_item["item_id"] = xblock.scope_ids.usage_id
         # Create a submission for Bob, and corresponding workflow.
-        submission = sub_api.create_submission(bob_item, {'text': "Bob Answer"})
+        submission = sub_api.create_submission(
+            bob_item, prepare_submission_for_serialization(("Bob Answer 1", "Bob Answer 2"))
+        )
         peer_api.on_start(submission["uuid"])
         workflow_api.create_workflow(submission["uuid"], ['peer'])
 
@@ -253,7 +274,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
         )
 
         path, context = xblock.get_student_info_path_and_context("Bob")
-        self.assertEquals("Bob Answer", context['submission']['answer']['text'])
+        self.assertEquals("Bob Answer 1", context['submission']['answer']['parts'][0]['text'])
         self.assertIsNotNone(context['workflow_cancellation'])
         self.assertEquals("openassessmentblock/staff_debug/student_info.html", path)
 
@@ -296,13 +317,14 @@ class TestCourseStaff(XBlockHandlerTestCase):
         xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, True, False, "Bob"
         )
+        xblock.runtime._services['user'] = NullUserService()
 
         bob_item = STUDENT_ITEM.copy()
         bob_item["item_id"] = xblock.scope_ids.usage_id
 
         # Create an image submission for Bob
         sub_api.create_submission(bob_item, {
-            'text':"Bob Answer",
+            'text': "Bob Answer",
             'file_key': "test_key"
         })
 
@@ -318,23 +340,24 @@ class TestCourseStaff(XBlockHandlerTestCase):
             self.assertEquals('http://www.example.com/image.jpeg', context['submission']['image_url'])
 
             # Check the fully rendered template
-            payload = urllib.urlencode({"student_id": "Bob"})
+            payload = urllib.urlencode({"student_username": "Bob"})
             resp = self.request(xblock, "render_student_info", payload)
             self.assertIn("http://www.example.com/image.jpeg", resp)
 
     @scenario('data/self_only_scenario.xml', user_id='Bob')
     def test_staff_debug_student_info_file_download_url_error(self, xblock):
         # Simulate that we are course staff
-        xblock.xmodule_runtime =  self._create_mock_runtime(
+        xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, True, False, "Bob"
         )
+        xblock.runtime._services['user'] = NullUserService()
 
         bob_item = STUDENT_ITEM.copy()
         bob_item["item_id"] = xblock.scope_ids.usage_id
 
         # Create an image submission for Bob
         sub_api.create_submission(bob_item, {
-            'text':"Bob Answer",
+            'text': "Bob Answer",
             'file_key': "test_key"
         })
 
@@ -348,7 +371,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
             self.assertNotIn('image_url', context['submission'])
 
             # Check the fully rendered template
-            payload = urllib.urlencode({"student_id": "Bob"})
+            payload = urllib.urlencode({"student_username": "Bob"})
             resp = self.request(xblock, "render_student_info", payload)
             self.assertIn("Bob Answer", resp)
 
@@ -359,6 +382,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
         xblock.xmodule_runtime = self._create_mock_runtime(
             xblock.scope_ids.usage_id, True, False, "Bob"
         )
+        xblock.runtime._services['user'] = NullUserService()
 
         # Commonly chosen options for assessments
         options_selected = {
@@ -377,7 +401,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
         bob_item["item_id"] = xblock.scope_ids.usage_id
 
         # Create a submission for Bob, and corresponding workflow.
-        submission = sub_api.create_submission(bob_item, {'text':"Bob Answer"})
+        submission = sub_api.create_submission(bob_item, {'text': "Bob Answer"})
         peer_api.on_start(submission["uuid"])
         workflow_api.create_workflow(submission["uuid"], ['peer', 'self'])
 
@@ -410,7 +434,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
 
         # Now Bob should be fully populated in the student info view.
         request = namedtuple('Request', 'params')
-        request.params = {"student_id": "Bob"}
+        request.params = {"student_username": "Bob"}
         # Verify that we can render without error
         resp = xblock.render_student_info(request)
         self.assertIn("bob answer", resp.body.lower())
@@ -599,7 +623,7 @@ class TestCourseStaff(XBlockHandlerTestCase):
         # Verify that we can render without error
         params = {"submission_uuid": submission["uuid"], "comments": "Inappropriate language."}
         resp = self.request(xblock, 'cancel_submission', json.dumps(params), response_format='json')
-        self.assertIn("Student submission was removed from the ", resp['msg'])
+        self.assertIn("The student submission has been removed from peer", resp['msg'])
         self.assertEqual(True, resp['success'])
 
     def _create_mock_runtime(self, item_id, is_staff, is_admin, anonymous_user_id):

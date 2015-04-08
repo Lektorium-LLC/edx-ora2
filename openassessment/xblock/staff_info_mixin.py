@@ -16,7 +16,7 @@ from openassessment.workflow.errors import (
 from openassessment.assessment.errors.ai import AIError
 from openassessment.xblock.resolve_dates import DISTANT_PAST, DISTANT_FUTURE
 from openassessment.xblock.data_conversion import (
-    create_rubric_dict, convert_training_examples_list_to_dict
+    create_rubric_dict, convert_training_examples_list_to_dict, create_submission_dict
 )
 from submissions import api as submission_api
 from openassessment.assessment.api import peer as peer_api
@@ -24,6 +24,7 @@ from openassessment.assessment.api import self as self_api
 from openassessment.assessment.api import ai as ai_api
 from openassessment.fileupload import api as file_api
 from openassessment.workflow import api as workflow_api
+from openassessment.fileupload import exceptions as file_exceptions
 
 
 logger = logging.getLogger(__name__)
@@ -138,7 +139,7 @@ class StaffInfoMixin(object):
         context['display_reschedule_unfinished_tasks'] = display_ai_staff_info
         if display_ai_staff_info:
             context['classifierset'] = ai_api.get_classifier_set_info(
-                create_rubric_dict(self.prompt, self.rubric_criteria_with_labels),
+                create_rubric_dict(self.prompts, self.rubric_criteria_with_labels),
                 example_based_assessment['algorithm_id'],
                 student_item['course_id'],
                 student_item['item_id']
@@ -179,7 +180,7 @@ class StaffInfoMixin(object):
             examples = assessment["examples"]
             try:
                 workflow_uuid = ai_api.train_classifiers(
-                    create_rubric_dict(self.prompt, self.rubric_criteria_with_labels),
+                    create_rubric_dict(self.prompts, self.rubric_criteria_with_labels),
                     convert_training_examples_list_to_dict(examples),
                     student_item_dict.get('course_id'),
                     student_item_dict.get('item_id'),
@@ -208,58 +209,62 @@ class StaffInfoMixin(object):
         """
         Renders all relative information for a specific student's workflow.
 
-        Given a student's ID, we can render a staff-only section of the page
+        Given a student's username, we can render a staff-only section of the page
         with submissions and assessments specific to the student.
 
         Must be course staff to render this view.
 
         """
         try:
-            student_id = data.params.get('student_id', '')
-            path, context = self.get_student_info_path_and_context(student_id)
+            student_username = data.params.get('student_username', '')
+            path, context = self.get_student_info_path_and_context(student_username)
             return self.render_assessment(path, context)
 
         except PeerAssessmentInternalError:
             return self.render_error(self._(u"Error finding assessment workflow cancellation."))
 
-    def get_student_info_path_and_context(self, student_id):
+    def get_student_info_path_and_context(self, student_username):
         """
         Get the proper path and context for rendering the the student info
         section of the staff debug panel.
 
         Args:
-            student_id (unicode): The ID of the student to report.
+            student_username (unicode): The username of the student to report.
 
         """
         submission_uuid = None
         submission = None
         assessment_steps = self.assessment_steps
+        anonymous_user_id = None
+        submissions = None
+        student_item = None
 
-        if student_id:
-            student_item = self.get_student_item_dict()
-            student_item['student_id'] = student_id
+        if student_username:
+            anonymous_user_id = self.get_anonymous_user_id(student_username, self.course_id)
+            student_item = self.get_student_item_dict(anonymous_user_id=anonymous_user_id)
 
+        if anonymous_user_id:
             # If there is a submission available for the requested student, present
             # it. If not, there will be no other information to collect.
             submissions = submission_api.get_submissions(student_item, 1)
 
-            if submissions:
-                submission_uuid = submissions[0]['uuid']
-                submission = submissions[0]
+        if submissions:
+            submission_uuid = submissions[0]['uuid']
+            submission = submissions[0]
 
-                if 'file_key' in submission.get('answer', {}):
-                    file_key = submission['answer']['file_key']
+            if 'file_key' in submission.get('answer', {}):
+                file_key = submission['answer']['file_key']
 
-                    try:
-                        submission['image_url'] = file_api.get_download_url(file_key)
-                    except file_api.FileUploadError:
-                        # Log the error, but do not prevent the rest of the student info
-                        # from being displayed.
-                        msg = (
-                            u"Could not retrieve image URL for staff debug page.  "
-                            u"The student ID is '{student_id}', and the file key is {file_key}"
-                        ).format(student_id=student_id, file_key=file_key)
-                        logger.exception(msg)
+                try:
+                    submission['image_url'] = file_api.get_download_url(file_key)
+                except file_exceptions.FileUploadError:
+                    # Log the error, but do not prevent the rest of the student info
+                    # from being displayed.
+                    msg = (
+                        u"Could not retrieve image URL for staff debug page.  "
+                        u"The student username is '{student_username}', and the file key is {file_key}"
+                    ).format(student_username=student_username, file_key=file_key)
+                    logger.exception(msg)
 
         example_based_assessment = None
         self_assessment = None
@@ -281,7 +286,7 @@ class StaffInfoMixin(object):
             workflow_cancellation['cancelled_by'] = self.get_username(workflow_cancellation['cancelled_by_id'])
 
         context = {
-            'submission': submission,
+            'submission': create_submission_dict(submission, self.prompts) if submission else None,
             'workflow_cancellation': workflow_cancellation,
             'peer_assessments': peer_assessments,
             'submitted_assessments': submitted_assessments,
@@ -371,10 +376,10 @@ class StaffInfoMixin(object):
                 cancelled_by_id=student_item_dict['student_id'],
                 assessment_requirements=assessment_requirements
             )
-            return {"success": True, 'msg': self._(u"Student submission was removed from the peer grading pool."
-                                                   u" If you'd like to allow the student to submit a new response,"
-                                                   u" please also reset the student state of the problem from"
-                                                   u" the Instructor Dashboard.")}
+            return {"success": True, 'msg': self._(u"The student submission has been removed from peer assessment. "
+                                                   u"The student receives a grade of zero unless you reset "
+                                                   u"the student's attempts for the problem to allow them to "
+                                                   u"resubmit a response.")}
         except (
                 AssessmentWorkflowError,
                 AssessmentWorkflowInternalError

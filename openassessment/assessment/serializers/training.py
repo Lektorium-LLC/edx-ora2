@@ -4,6 +4,7 @@ Serializers for the training assessment type.
 from django.core.cache import cache
 from django.db import transaction, IntegrityError
 from openassessment.assessment.models import TrainingExample
+from openassessment.assessment.data_conversion import update_training_example_answer_format
 from .base import rubric_from_dict, RubricSerializer
 
 
@@ -58,7 +59,7 @@ def serialize_training_example(example):
     example_dict = cache.get(cache_key)
     if example_dict is None:
         example_dict = {
-            'answer': example.answer,
+            'answer': update_training_example_answer_format(example.answer),
             'options_selected': example.options_selected_dict,
             'rubric': RubricSerializer.serialized_from_cache(example.rubric),
         }
@@ -107,7 +108,11 @@ def deserialize_training_examples(examples, rubric_dict):
         >>> ]
         >>>
         >>> rubric = {
-        >>>     "prompt": "Write an essay!",
+        >>>     "prompts": [
+        >>>         {"description": "Prompt 1"}
+        >>>         {"description": "Prompt 2"}
+        >>>         {"description": "Prompt 3"}
+        >>>     ],
         >>>     "criteria": [
         >>>         {
         >>>             "order_num": 0,
@@ -126,7 +131,15 @@ def deserialize_training_examples(examples, rubric_dict):
         >>>
         >>> examples = [
         >>>     {
-        >>>         'answer': u'Lorem ipsum',
+        >>>         'answer': {
+        >>>             'parts': {
+        >>>                 [
+        >>>                     {'text:' 'Answer part 1'},
+        >>>                     {'text:' 'Answer part 2'},
+        >>>                     {'text:' 'Answer part 3'}
+        >>>                 ]
+        >>>             }
+        >>>         },
         >>>         'options_selected': {
         >>>             'vocabulary': 'good',
         >>>             'grammar': 'excellent'
