@@ -11,11 +11,13 @@
                     {% for topscore in topscores %}
                         <li class="leaderboard__score__item">
                             <h4 class="leaderboard__list__number">{{ forloop.counter }}</h4>
-                            {% with num_points=topscore.score %}
                             <h4 class="leaderboard__score__title">
-                                {% blocktrans %}{{ num_points }} points{% endblocktrans %}
+                                {% blocktrans count num_points=topscore.score %}
+                                    {{ num_points }} point
+                                    {% plural %}
+                                    {{ num_points }} points
+                                {% endblocktrans %}
                             </h4>
-                            {% endwith %}
                             <div class="leaderboard__answer">
                                 {% if topscore.file %}
                                 <img class="leaderboard__score__image" alt="{% trans "The image associated with your peer's submission." %}" src="{{ topscore.file }}" />

@@ -94,7 +94,13 @@
                                                 </h5>
                                                 <span class="answer__score">
                                                     <span class="answer__score__label sr">{% trans "Grade Earned" %}: </span>
-                                                    <span class="answer__score__value">{{ part.option.points }} {% trans "points" %}</span>
+                                                    <span class="answer__score__value">
+                                                        {% blocktrans count num_points=part.option.points %}
+                                                            {{ num_points }} point
+                                                            {% plural %}
+                                                            {{ num_points }} points
+                                                        {% endblocktrans %}
+                                                    </span>
                                                 </span>
                                             </li>
                                             {% endif %}

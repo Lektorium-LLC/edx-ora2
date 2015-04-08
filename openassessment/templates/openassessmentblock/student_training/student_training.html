@@ -119,7 +119,13 @@
                                                     </div>
                                                     <div class="wrapper--metadata">
                                                         <span class="answer__tip">{{ option.explanation }}</span>
-                                                        <span class="answer__points">{{option.points}} <span class="answer__points__label">{% trans "points" %}</span></span>
+                                                        <span class="answer__points">
+                                                            {% blocktrans with label_tag_start='<span class="answer__points__label">' count num_points=option.points %}
+                                                                {{ num_points }} {{ label_tag_start }}point
+                                                                {% plural %}
+                                                                {{ num_points }} {{ label_tag_start }}points
+                                                            {% endblocktrans %}</span>
+                                                        </span>
                                                     </div>
                                                 </li>
                                             {% endfor %}
