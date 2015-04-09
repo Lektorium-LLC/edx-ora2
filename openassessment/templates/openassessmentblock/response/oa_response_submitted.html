@@ -42,7 +42,8 @@
             <article class="submission__answer__display">
                 <h3 class="submission__answer__display__title">{% trans "Your Response" %}</h3>
 
-                {% include "openassessmentblock/oa_submission_answer.html" with answer=student_submission.answer answer_text_label="Your response to the question above:" %}
+                {% trans "Your response to the question above:" as answer_text_label %}
+                {% include "openassessmentblock/oa_submission_answer.html" with answer=student_submission.answer %}
 
                 {% if allow_file_upload and file_url %}
                 <h3 class="submission__answer__display__title">{% trans "Your Image" %}</h3>

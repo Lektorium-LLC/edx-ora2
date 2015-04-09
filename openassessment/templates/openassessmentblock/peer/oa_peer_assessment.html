@@ -66,7 +66,8 @@
                                     </h3>
                                 </header>
 
-                                {% include "openassessmentblock/oa_submission_answer.html" with answer=peer_submission.answer answer_text_label="Your peer's response to the question above:" %}
+                                {% trans "Your peer's response to the question above:" as answer_text_label %}
+                                {% include "openassessmentblock/oa_submission_answer.html" with answer=peer_submission.answer %}
 
                                 {% if allow_file_upload and peer_file_url %}
                                 <header class="peer-assessment__display__header">
