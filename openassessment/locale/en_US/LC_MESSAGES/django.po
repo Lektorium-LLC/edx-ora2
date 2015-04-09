@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: edx-platform\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-09 11:27-0400\n"
+"POT-Creation-Date: 2015-04-09 11:47-0400\n"
 "PO-Revision-Date: 2015-03-06 10:35+0000\n"
 "Last-Translator: Usman Khalid\n"
 "Language-Team: English (United States) (http://www.transifex.com/projects/p/"
@@ -533,6 +533,7 @@ msgstr ""
 #: openassessment/templates/openassessmentblock/response/oa_response_graded.html:23
 #: openassessment/templates/openassessmentblock/response/oa_response_submitted.html:43
 #: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:43
+#: openassessment/xblock/openassessmentblock.py:49
 msgid "Your Response"
 msgstr ""
 
@@ -1305,6 +1306,7 @@ msgid "Your response to the question above:"
 msgstr ""
 
 #: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:12
+#: openassessment/xblock/openassessmentblock.py:67
 msgid "Assess Your Response"
 msgstr ""
 
@@ -1511,7 +1513,7 @@ msgstr ""
 #: openassessment/templates/openassessmentblock/staff_debug/student_info.html:180
 #: openassessment/workflow/models.py:87
 #: openassessment/xblock/grade_mixin.py:193
-#: openassessment/xblock/openassessmentblock.py:512
+#: openassessment/xblock/openassessmentblock.py:515
 msgid "Self Assessment"
 msgstr ""
 
@@ -1608,12 +1610,12 @@ msgstr ""
 
 #: openassessment/workflow/models.py:86
 #: openassessment/xblock/grade_mixin.py:191
-#: openassessment/xblock/openassessmentblock.py:511
+#: openassessment/xblock/openassessmentblock.py:514
 msgid "Peer Assessment"
 msgstr ""
 
 #: openassessment/workflow/models.py:88
-#: openassessment/xblock/openassessmentblock.py:509
+#: openassessment/xblock/openassessmentblock.py:512
 msgid "Student Training"
 msgstr ""
 
@@ -1645,11 +1647,27 @@ msgstr ""
 msgid "Feedback saved."
 msgstr ""
 
-#: openassessment/xblock/openassessmentblock.py:508
+#: openassessment/xblock/openassessmentblock.py:55
+msgid "Learn to Assess"
+msgstr ""
+
+#: openassessment/xblock/openassessmentblock.py:61
+msgid "Assess Peers' Responses"
+msgstr ""
+
+#: openassessment/xblock/openassessmentblock.py:73
+msgid "Your Grade:"
+msgstr ""
+
+#: openassessment/xblock/openassessmentblock.py:79
+msgid "Leaderboard"
+msgstr ""
+
+#: openassessment/xblock/openassessmentblock.py:511
 msgid "Submission"
 msgstr ""
 
-#: openassessment/xblock/openassessmentblock.py:510
+#: openassessment/xblock/openassessmentblock.py:513
 msgid "Example-based Assessment"
 msgstr ""
 
