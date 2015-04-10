@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: edx-platform\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-06 06:35-0400\n"
+"POT-Creation-Date: 2015-04-09 12:40-0400\n"
 "PO-Revision-Date: 2015-01-22 20:53+0300\n"
 "Last-Translator: Usman Khalid\n"
 "Language-Team: Russian (http://www.transifex.com/projects/p/edx-platform/"
@@ -80,21 +80,34 @@ msgstr "Идёт загрузка"
 
 #: openassessment/templates/openassessmentblock/oa_rubric.html:14
 #: openassessment/templates/openassessmentblock/edit/oa_edit_criterion.html:55
-#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:80
-#: openassessment/templates/openassessmentblock/student_training/student_training.html:91
+#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:81
+#: openassessment/templates/openassessmentblock/student_training/student_training.html:92
 msgid "Required"
 msgstr "Требуется"
 
-#: openassessment/templates/openassessmentblock/oa_rubric.html:33
-#: openassessment/templates/openassessmentblock/edit/oa_training_example_criterion.html:15
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:97
-#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:99
-#: openassessment/templates/openassessmentblock/student_training/student_training.html:122
-msgid "points"
-msgstr "балл(ов)"
+#: openassessment/templates/openassessmentblock/oa_rubric.html:34
+#, python-format
+msgid ""
+"\n"
+"                                    %(num_points)s %(label_tag_start)spoint\n"
+"                                    "
+msgid_plural ""
+"\n"
+"                                    %(num_points)s "
+"%(label_tag_start)spoints\n"
+"                                "
+msgstr[0] ""
+"\n"
+"%(num_points)s %(label_tag_start)sбалл"
+msgstr[1] ""
+"\n"
+"%(num_points)s %(label_tag_start)sбалла"
+msgstr[2] ""
+"\n"
+"%(num_points)s %(label_tag_start)sбаллов"
 
-#: openassessment/templates/openassessmentblock/oa_rubric.html:41
-#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:107
+#: openassessment/templates/openassessmentblock/oa_rubric.html:47
+#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:113
 msgid "Comments"
 msgstr "Комментарии"
 
@@ -254,10 +267,10 @@ msgid "Cancel"
 msgstr "Отмена"
 
 #: openassessment/templates/openassessmentblock/edit/oa_edit_criterion.html:7
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:101
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:143
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:182
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:213
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:102
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:144
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:183
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:214
 msgid "Criterion"
 msgstr "Критерий"
 
@@ -533,6 +546,26 @@ msgstr "Ответ"
 msgid "Not Selected"
 msgstr "Не выбрано"
 
+#: openassessment/templates/openassessmentblock/edit/oa_training_example_criterion.html:16
+#, python-format
+msgid ""
+"\n"
+"                            %(num_points)s point\n"
+"                            "
+msgid_plural ""
+"\n"
+"                            %(num_points)s points\n"
+"                        "
+msgstr[0] ""
+"\n"
+"%(num_points)s балл"
+msgstr[1] ""
+"\n"
+"%(num_points)s балла"
+msgstr[2] ""
+"\n"
+"%(num_points)s баллов"
+
 #: openassessment/templates/openassessmentblock/grade/oa_grade_cancelled.html:7
 #: openassessment/templates/openassessmentblock/grade/oa_grade_closed.html:7
 #: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:8
@@ -544,6 +577,7 @@ msgid "Your Grade"
 msgstr "Ваша оценка"
 
 #: openassessment/templates/openassessmentblock/grade/oa_grade_cancelled.html:12
+#, python-format
 msgid ""
 "\n"
 "                                    %(points_earned)s out of "
@@ -587,20 +621,21 @@ msgstr ""
 #: openassessment/templates/openassessmentblock/response/oa_response_graded.html:23
 #: openassessment/templates/openassessmentblock/response/oa_response_submitted.html:43
 #: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:43
+#: openassessment/xblock/openassessmentblock.py:49
 msgid "Your Response"
 msgstr "Ваш ответ"
 
 #: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:37
 #: openassessment/templates/openassessmentblock/response/oa_response_graded.html:30
-#: openassessment/templates/openassessmentblock/response/oa_response_submitted.html:48
+#: openassessment/templates/openassessmentblock/response/oa_response_submitted.html:49
 msgid "Your Image"
 msgstr "Ваше изображение"
 
 #: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:41
 #: openassessment/templates/openassessmentblock/response/oa_response.html:92
 #: openassessment/templates/openassessmentblock/response/oa_response_graded.html:33
-#: openassessment/templates/openassessmentblock/response/oa_response_submitted.html:51
-#: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:56
+#: openassessment/templates/openassessmentblock/response/oa_response_submitted.html:52
+#: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:57
 msgid "The image associated with your submission."
 msgstr "Изображение, прикреплённое к Вашему ответу."
 
@@ -613,10 +648,10 @@ msgid "Overall Grade"
 msgstr "Общая оценка"
 
 #: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:63
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:104
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:146
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:184
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:215
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:105
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:147
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:185
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:216
 msgid "Points"
 msgstr "Баллы"
 
@@ -625,7 +660,7 @@ msgid "Assessor"
 msgstr "Оценивающий"
 
 #: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:79
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:212
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:218
 #, python-format
 msgid "Peer %(peer_num)s"
 msgstr "Участник %(peer_num)s"
@@ -635,8 +670,8 @@ msgid "Peer's Assessment"
 msgstr "Оценка участника"
 
 #: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:89
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:120
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:144
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:126
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:150
 #, python-format
 msgid "More information about %(name)s"
 msgstr "Подробная информация о %(name)s"
@@ -645,65 +680,87 @@ msgstr "Подробная информация о %(name)s"
 msgid "Grade Earned"
 msgstr "Полученная оценка"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:111
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:98
+#, python-format
+msgid ""
+"\n"
+"                                                            %(num_points)s "
+"point\n"
+"                                                            "
+msgid_plural ""
+"\n"
+"                                                            %(num_points)s "
+"points\n"
+"                                                        "
+msgstr[0] ""
+"\n"
+"%(num_points)s балл"
+msgstr[1] ""
+"\n"
+"%(num_points)s балла"
+msgstr[2] ""
+"\n"
+"%(num_points)s баллов"
+
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:117
 msgid "Your Self Assessment"
 msgstr "Ваша собственная оценка"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:114
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:181
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:120
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:187
 msgid "Your Assessment"
 msgstr "Ваша оценка"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:135
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:138
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:209
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:141
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:144
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:210
 msgid "Example-Based Assessment"
 msgstr "Автоматизированное оценивание"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:159
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:161
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:165
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:167
 msgid "Additional Comments"
 msgstr "Дополнительные комментарии"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:170
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:97
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:176
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:98
 msgid "Peer"
 msgstr "Участник"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:201
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:207
 msgid "Additional comments on your response"
 msgstr "Дополнительные коментарии к Вашему ответу"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:211
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:217
 msgid "Peer assessor"
 msgstr "Оценивающий"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:217
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:223
 msgid "Peer's assessment"
 msgstr "Оценка участника"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:228
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:229
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:234
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:235
 msgid "Self assessment"
 msgstr "Оценивание своего ответа"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:234
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:240
 msgid "Your assessment"
 msgstr "Ваша оценка"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:249
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:255
 msgid "Provide Feedback on Peer Assessments"
 msgstr "Напишите отзыв об оценивании участниками"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:258
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:264
 msgid "Submitting Feedback"
 msgstr "Отправка отзыва"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:264
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:270
 msgid "Your Feedback Has Been Submitted"
 msgstr "Ваш отзыв успешно отправлен"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:266
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:272
 msgid ""
 "Your feedback has been submitted. Course staff will be able to see this "
 "feedback when they review course records."
@@ -711,7 +768,7 @@ msgstr ""
 "Ваш отзыв отправлен. Члены команды курса смогут увидеть Ваш отзыв в отчётах "
 "по курсу."
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:272
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:278
 msgid ""
 "Course staff will be able to see any feedback that you provide here when "
 "they review course records."
@@ -719,7 +776,7 @@ msgstr ""
 "Члены команды курса смогут увидеть отправленный Вами отзыв в отчётах по "
 "курсу."
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:278
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:284
 msgid ""
 "Select the statements below that best reflect your experience with peer "
 "assessments"
@@ -727,23 +784,23 @@ msgstr ""
 "Выберите утверждения, наиболее точно отражающие Ваши впечатления от "
 "оценивания участниками"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:286
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:292
 msgid "These assessments were useful."
 msgstr "Эти задания были полезными."
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:294
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:300
 msgid "These assessments were not useful."
 msgstr "Эти задания были бесполезными."
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:302
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:308
 msgid "I disagree with one or more of the peer assessments of my response."
 msgstr "Я не согласен по меньшей мере с одной из оценок моего ответа."
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:310
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:316
 msgid "Some comments I received were inappropriate."
 msgstr "Некоторые полученные мною комментарии были неприемлемыми."
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:315
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:321
 msgid ""
 "Please provide any feedback on the grade or comments that you received from "
 "your peers."
@@ -751,15 +808,15 @@ msgstr ""
 "Пожалуйста, напишите отзыв об оценке или о комментариях, полученных от "
 "других участников."
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:318
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:324
 msgid "I feel the feedback I received was..."
 msgstr "Я считаю, что полученный мною отзыв..."
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:329
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:335
 msgid "We could not submit your feedback"
 msgstr "Не удалось отправить Ваш отзыв"
 
-#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:335
+#: openassessment/templates/openassessmentblock/grade/oa_grade_complete.html:341
 msgid "Submit Feedback on Peer Assessments"
 msgstr "Отправить отзыв об оценивании участниками"
 
@@ -815,16 +872,37 @@ msgstr ""
 msgid "Top-Scoring Responses for This Assignment"
 msgstr "Лучшие ответы на данное задание"
 
-#: openassessment/templates/openassessmentblock/leaderboard/oa_leaderboard_show.html:16
+#: openassessment/templates/openassessmentblock/leaderboard/oa_leaderboard_show.html:15
 #, python-format
-msgid "%(num_points)s points"
-msgstr "%(num_points)s баллов"
+msgid ""
+"\n"
+"                                    %(num_points)s point\n"
+"                                    "
+msgid_plural ""
+"\n"
+"                                    %(num_points)s points\n"
+"                                "
+msgstr[0] ""
+"\n"
+"%(num_points)s балл"
+msgstr[1] ""
+"\n"
+"%(num_points)s балла"
+msgstr[2] ""
+"\n"
+"%(num_points)s баллов"
 
-#: openassessment/templates/openassessmentblock/leaderboard/oa_leaderboard_show.html:21
-#: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:79
-#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:63
+#: openassessment/templates/openassessmentblock/leaderboard/oa_leaderboard_show.html:23
+#: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:80
+#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:64
 msgid "The image associated with your peer's submission."
 msgstr "Изображение, прикреплённое к ответу участника."
+
+#: openassessment/templates/openassessmentblock/leaderboard/oa_leaderboard_show.html:25
+#: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:69
+#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:53
+msgid "Your peer's response to the question above:"
+msgstr "Ответ участника на данный вопрос:"
 
 #: openassessment/templates/openassessmentblock/leaderboard/oa_leaderboard_waiting.html:15
 msgid ""
@@ -1112,15 +1190,15 @@ msgstr ""
 "%(num_must_grade)s\n"
 "                                        "
 
-#: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:74
-#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:58
-#: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:51
+#: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:75
+#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:59
+#: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:52
 msgid "Associated Image"
 msgstr "Прикреплённое изображение"
 
-#: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:94
-#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:148
-#: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:68
+#: openassessment/templates/openassessmentblock/peer/oa_peer_assessment.html:95
+#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:154
+#: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:69
 msgid "We could not submit your assessment"
 msgstr "Не удаётся отправить Вашу оценку"
 
@@ -1204,6 +1282,29 @@ msgstr ""
 #: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:47
 msgid "Assessment #"
 msgstr "Оценивание №"
+
+#: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode.html:101
+#: openassessment/templates/openassessmentblock/student_training/student_training.html:124
+#, python-format
+msgid ""
+"\n"
+"                                                                %(num_points)s "
+"%(label_tag_start)spoint\n"
+"                                                                "
+msgid_plural ""
+"\n"
+"                                                                %(num_points)s "
+"%(label_tag_start)spoints\n"
+"                                                            "
+msgstr[0] ""
+"\n"
+"%(num_points)s %(label_tag_start)sбалл"
+msgstr[1] ""
+"\n"
+"%(num_points)s %(label_tag_start)sбалла"
+msgstr[2] ""
+"\n"
+"%(num_points)s %(label_tag_start)sбаллов"
 
 #: openassessment/templates/openassessmentblock/peer/oa_peer_turbo_mode_waiting.html:33
 msgid ""
@@ -1292,6 +1393,10 @@ msgstr "Описание подзадания."
 msgid "Your response to the question above."
 msgstr "Введите Ваш ответ на приведённый выше вопрос."
 
+#: openassessment/templates/openassessmentblock/response/oa_response.html:69
+msgid "Enter your response to the question above."
+msgstr "Введите Ваш ответ на данный вопрос."
+
 #: openassessment/templates/openassessmentblock/response/oa_response.html:79
 msgid "We could not upload this image"
 msgstr "Не удаётся отправить данное изображение"
@@ -1342,6 +1447,7 @@ msgid "Submission Cancelled"
 msgstr "Ответ удалён"
 
 #: openassessment/templates/openassessmentblock/response/oa_response_cancelled.html:28
+#, python-format
 msgid ""
 "\n"
 "                        Your submission has been cancelled by "
@@ -1349,10 +1455,10 @@ msgid ""
 "                    "
 msgstr ""
 "\n"
-"Ваш ответ удалён пользователем %(removed_by_username)s "
-"%(removed_datetime)s"
+"Ваш ответ удалён пользователем %(removed_by_username)s %(removed_datetime)s"
 
 #: openassessment/templates/openassessmentblock/response/oa_response_cancelled.html:33
+#, python-format
 msgid ""
 "\n"
 "                        Comments: %(comments)s\n"
@@ -1427,7 +1533,13 @@ msgstr ""
 "%(start_tag)sОценивание своего ответа%(end_tag)s.\n"
 "                    "
 
+#: openassessment/templates/openassessmentblock/response/oa_response_submitted.html:45
+#: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:46
+msgid "Your response to the question above:"
+msgstr "Ваш ответ на данный вопрос:"
+
 #: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:12
+#: openassessment/xblock/openassessmentblock.py:67
 msgid "Assess Your Response"
 msgstr "Оцените свой ответ"
 
@@ -1440,7 +1552,7 @@ msgstr ""
 "необходимо завершить к <span class=\"date\">%(due_date)s</span> (в течение "
 "%(time_until)s)"
 
-#: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:75
+#: openassessment/templates/openassessmentblock/self/oa_self_assessment.html:76
 msgid "Submit Your Assessment"
 msgstr "Отправить оценку"
 
@@ -1576,80 +1688,84 @@ msgstr ""
 "\n"
 "Комментарии: %(comments)s"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:31
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:24
+msgid "The student's response to the question above:"
+msgstr "Ответ студента на данный вопрос:"
+
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:32
 msgid "The image associated with this response"
 msgstr "Изображение, прикреплённое к данному ответу"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:44
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:45
 msgid "Remove submission from peer grading"
 msgstr "Удаление ответа участника"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:58
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:59
 msgid "Caution: Removing a student's submission cannot be undone."
 msgstr "Внимание! Удаление ответа студента необратимо."
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:64
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:65
 msgid "Comments:"
 msgstr "Комментарии:"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:78
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:79
 msgid "Remove submission"
 msgstr "Удалить ответ"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:94
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:95
 msgid "Peer Assessments for This Student"
 msgstr "Оценки студента, полученные от других участников"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:98
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:139
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:99
 #: openassessment/templates/openassessmentblock/staff_debug/student_info.html:140
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:141
 msgid "Assessment"
 msgstr "Оценки"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:102
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:144
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:183
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:214
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:103
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:145
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:184
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:215
 msgid "Selected Option"
 msgstr "Выбранная опция"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:103
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:145
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:104
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:146
 msgid "Feedback"
 msgstr "Отзыв"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:105
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:147
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:185
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:216
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:106
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:148
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:186
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:217
 msgid "Points Possible"
 msgstr "Наибольшее число баллов"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:125
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:167
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:126
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:168
 msgid "Overall Feedback"
 msgstr "Общий отзыв"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:136
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:137
 msgid "Peer Assessments Completed by This Student"
 msgstr "Оценки участников, выставленные студентом "
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:178
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:179
 msgid "Student's Self Assessment"
 msgstr "Оценка, данная студентом своему ответу"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:179
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:180
 #: openassessment/workflow/models.py:87
 #: openassessment/xblock/grade_mixin.py:193
-#: openassessment/xblock/openassessmentblock.py:510
+#: openassessment/xblock/openassessmentblock.py:515
 msgid "Self Assessment"
 msgstr "Оценивание своего ответа"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:210
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:211
 msgid "Example Based Assessment"
 msgstr "Автоматизированное оценивание"
 
-#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:239
+#: openassessment/templates/openassessmentblock/staff_debug/student_info.html:240
 msgid "Couldn't find a response for this student."
 msgstr "Ответы данного студента не найдены"
 
@@ -1708,27 +1824,31 @@ msgstr ""
 "%(current_progress_num)s из %(num_to_complete)s\n"
 "                            "
 
-#: openassessment/templates/openassessmentblock/student_training/student_training.html:95
+#: openassessment/templates/openassessmentblock/student_training/student_training.html:75
+msgid "The response to the question above:"
+msgstr "Ответ на данный вопрос:"
+
+#: openassessment/templates/openassessmentblock/student_training/student_training.html:96
 msgid "Selected Options Agree"
 msgstr "Выбранные опции совпадают"
 
-#: openassessment/templates/openassessmentblock/student_training/student_training.html:98
+#: openassessment/templates/openassessmentblock/student_training/student_training.html:99
 msgid "The option you selected is the option that the instructor selected."
 msgstr "Вы выбрали тy же опцию, что и преподаватель."
 
-#: openassessment/templates/openassessmentblock/student_training/student_training.html:102
+#: openassessment/templates/openassessmentblock/student_training/student_training.html:103
 msgid "Selected Options Differ"
 msgstr "Выбранные опции различаются"
 
-#: openassessment/templates/openassessmentblock/student_training/student_training.html:105
+#: openassessment/templates/openassessmentblock/student_training/student_training.html:106
 msgid "The option you selected is not the option that the instructor selected."
 msgstr "Выбранная Вами опция отличается от выбора преподавателя."
 
-#: openassessment/templates/openassessmentblock/student_training/student_training.html:138
+#: openassessment/templates/openassessmentblock/student_training/student_training.html:145
 msgid "We could not check your assessment"
 msgstr "Не удаётся проверить Ваше оценивание"
 
-#: openassessment/templates/openassessmentblock/student_training/student_training.html:145
+#: openassessment/templates/openassessmentblock/student_training/student_training.html:152
 msgid "Compare your selections with the instructor's selections"
 msgstr "Сравнить свой выбор с преподавателем"
 
@@ -1750,12 +1870,12 @@ msgstr "Не удаётся загрузить шаг обучения для д
 
 #: openassessment/workflow/models.py:86
 #: openassessment/xblock/grade_mixin.py:191
-#: openassessment/xblock/openassessmentblock.py:509
+#: openassessment/xblock/openassessmentblock.py:514
 msgid "Peer Assessment"
 msgstr "Оценивание участниками"
 
 #: openassessment/workflow/models.py:88
-#: openassessment/xblock/openassessmentblock.py:507
+#: openassessment/xblock/openassessmentblock.py:512
 msgid "Student Training"
 msgstr "Обучение оцениванию"
 
@@ -1787,11 +1907,27 @@ msgstr "Не удаётся сохранить отзыв."
 msgid "Feedback saved."
 msgstr "Отзыв сохранён."
 
-#: openassessment/xblock/openassessmentblock.py:506
+#: openassessment/xblock/openassessmentblock.py:55
+msgid "Learn to Assess"
+msgstr "Научитесь оценивать ответы"
+
+#: openassessment/xblock/openassessmentblock.py:61
+msgid "Assess Peers' Responses"
+msgstr "Оцените ответы других участников"
+
+#: openassessment/xblock/openassessmentblock.py:73
+msgid "Your Grade:"
+msgstr "Ваша оценка:"
+
+#: openassessment/xblock/openassessmentblock.py:79
+msgid "Leaderboard"
+msgstr "Лучшие ответы"
+
+#: openassessment/xblock/openassessmentblock.py:511
 msgid "Submission"
 msgstr "Отправка ответов"
 
-#: openassessment/xblock/openassessmentblock.py:508
+#: openassessment/xblock/openassessmentblock.py:513
 msgid "Example-based Assessment"
 msgstr "Автоматизированное оценивание"
 
@@ -1950,8 +2086,8 @@ msgid ""
 "problem to allow them to resubmit a response."
 msgstr ""
 "Ответ студента для оценки участниками удалён. Если Вы не удалите статус "
-"выполненной студентом задачи, чтобы он смог отправить ответ заново, "
-"то студент получит нулевую оценку."
+"выполненной студентом задачи, чтобы он смог отправить ответ заново, то "
+"студент получит нулевую оценку."
 
 #: openassessment/xblock/student_training_mixin.py:168
 msgid "options_selected must be a dictionary"
