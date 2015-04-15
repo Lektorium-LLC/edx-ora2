@@ -66,12 +66,12 @@
       }
 
       .step__counter, .wrapper--copy {
-        display: inline-block;
-        vertical-align: middle;
+        display: table-cell;
       }
 
       // step counter
       .step__counter {
+        vertical-align: top;
 
         // increment: show numbers using parent list counter
         &:before {
@@ -153,6 +153,7 @@
 
     .wrapper--copy {
       display: block !important;
+      vertical-align: middle;
     }
   }
 

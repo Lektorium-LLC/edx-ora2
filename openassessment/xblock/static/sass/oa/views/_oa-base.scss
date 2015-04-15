@@ -71,12 +71,12 @@
       }
 
       .step__counter, .wrapper--copy {
-        display: inline-block;
-        vertical-align: middle;
+        display: table-cell;
       }
 
       .wrapper--copy {
-        @include margin-left(($baseline-h/2));
+        vertical-align: middle;
+
         @include border-left(1px solid $color-decorative-tertiary);
         @include padding-left(($baseline-h/2));
 
@@ -88,6 +88,8 @@
       }
 
       .step__counter {
+        vertical-align: top;
+        @include padding-right(($baseline-h/2));
 
         // increment: show numbers using parent list counter
         &:before {
