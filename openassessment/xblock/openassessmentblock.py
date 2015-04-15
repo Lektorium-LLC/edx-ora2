@@ -37,43 +37,46 @@ from openassessment.xblock.data_conversion import create_prompts_list, create_ru
 
 logger = logging.getLogger(__name__)
 
+# Make '_' a no-op so we can scrape strings
+_ = lambda text: text
+
 
 UI_MODELS = {
     "submission": {
         "name": "submission",
         "class_id": "openassessment__response",
         "navigation_text": "Your response to this assignment",
-        "title": "Your Response"
+        "title": _("Your Response")
     },
     "student-training": {
         "name": "student-training",
         "class_id": "openassessment__student-training",
         "navigation_text": "Learn to assess responses",
-        "title": "Learn to Assess"
+        "title": _("Learn to Assess")
     },
     "peer-assessment": {
         "name": "peer-assessment",
         "class_id": "openassessment__peer-assessment",
         "navigation_text": "Your assessment(s) of peer responses",
-        "title": "Assess Peers' Responses"
+        "title": _("Assess Peers' Responses")
     },
     "self-assessment": {
         "name": "self-assessment",
         "class_id": "openassessment__self-assessment",
         "navigation_text": "Your assessment of your response",
-        "title": "Assess Your Response"
+        "title": _("Assess Your Response")
     },
     "grade": {
         "name": "grade",
         "class_id": "openassessment__grade",
         "navigation_text": "Your grade for this assignment",
-        "title": "Your Grade:"
+        "title": _("Your Grade:")
     },
      "leaderboard": {
         "name": "leaderboard",
         "class_id": "openassessment__leaderboard",
         "navigation_text": "A leaderboard of the top submissions",
-        "title": "Leaderboard"
+        "title": _("Leaderboard")
     }
 }
 
