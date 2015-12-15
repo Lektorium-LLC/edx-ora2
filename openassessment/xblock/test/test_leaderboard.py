@@ -3,15 +3,21 @@
 Tests for leaderboard handlers in Open Assessment XBlock.
 """
 import json
-import mock
-from django.core.cache import cache
-from submissions import api as sub_api
-from .base import XBlockHandlerTransactionTestCase, scenario
-from django.test.utils import override_settings
-from moto import mock_s3
+from random import randint
+from urlparse import urlparse
+
 import boto
 from boto.s3.key import Key
+from django.test.utils import override_settings
+from django.core.cache import cache
+import mock
+from moto import mock_s3
+
+from submissions import api as sub_api
+from .base import XBlockHandlerTransactionTestCase, scenario
 from openassessment.fileupload import api
+from openassessment.xblock.data_conversion import create_submission_dict, prepare_submission_for_serialization
+
 
 class TestLeaderboardRender(XBlockHandlerTransactionTestCase):
 
@@ -39,15 +45,20 @@ class TestLeaderboardRender(XBlockHandlerTransactionTestCase):
 
     @scenario('data/leaderboard_show.xml')
     def test_show_submissions(self, xblock):
-
         # Create some submissions (but fewer than the max that can be shown)
         self._create_submissions_and_scores(xblock, [
-            ("test answer 1", 1),
-            ("test answer 2", 2)
+            (prepare_submission_for_serialization(("test answer 1 part 1", "test answer 1 part 2")), 1),
+            (prepare_submission_for_serialization(("test answer 2 part 1", "test answer 2 part 2")), 2)
         ])
         self._assert_scores(xblock, [
-            {"content": "test answer 2", "score": 2},
-            {"content": "test answer 1", "score": 1}
+            {"score": 2, "submission": create_submission_dict(
+                {"answer": prepare_submission_for_serialization((u"test answer 2 part 1", u"test answer 2 part 2"))},
+                xblock.prompts
+            )},
+            {"score": 1, "submission": create_submission_dict(
+                {"answer": prepare_submission_for_serialization((u"test answer 1 part 1", u"test answer 1 part 2"))},
+                xblock.prompts
+            )}
         ])
         self._assert_leaderboard_visible(xblock, True)
 
@@ -57,27 +68,38 @@ class TestLeaderboardRender(XBlockHandlerTransactionTestCase):
 
         # Create more submissions than the max
         self._create_submissions_and_scores(xblock, [
-            ("test answer 3", 0),
-            ("test answer 4", 10),
-            ("test answer 5", 3)
+            (prepare_submission_for_serialization(("test answer 3 part 1", "test answer 3 part 2")), 0),
+            (prepare_submission_for_serialization(("test answer 4 part 1", "test answer 4 part 2")), 10),
+            (prepare_submission_for_serialization(("test answer 5 part 1", "test answer 5 part 2")), 3),
         ])
         self._assert_scores(xblock, [
-            {"content": "test answer 4", "score": 10},
-            {"content": "test answer 5", "score": 3},
-            {"content": "test answer 2", "score": 2}
+            {"score": 10, "submission": create_submission_dict(
+                {"answer": prepare_submission_for_serialization((u"test answer 4 part 1", u"test answer 4 part 2"))},
+                xblock.prompts
+            )},
+            {"score": 3, "submission": create_submission_dict(
+                {"answer": prepare_submission_for_serialization((u"test answer 5 part 1", u"test answer 5 part 2"))},
+                xblock.prompts
+            )},
+            {"score": 2, "submission": create_submission_dict(
+                {"answer": prepare_submission_for_serialization((u"test answer 2 part 1", u"test answer 2 part 2"))},
+                xblock.prompts
+            )}
         ])
         self._assert_leaderboard_visible(xblock, True)
 
     @scenario('data/leaderboard_show.xml')
     def test_show_submissions_that_have_greater_than_0_score(self, xblock):
-
         # Create some submissions (but fewer than the max that can be shown)
         self._create_submissions_and_scores(xblock, [
-            ("test answer 0", 0),
-            ("test answer 1", 1),
+            (prepare_submission_for_serialization(("test answer 0 part 1", "test answer 0 part 2")), 0),
+            (prepare_submission_for_serialization(("test answer 1 part 1", "test answer 1 part 2")), 1)
         ])
         self._assert_scores(xblock, [
-            {"content": "test answer 1", "score": 1}
+            {"score": 1, "submission": create_submission_dict(
+                {"answer": prepare_submission_for_serialization((u"test answer 1 part 1", u"test answer 1 part 2"))},
+                xblock.prompts
+            )},
         ])
         self._assert_leaderboard_visible(xblock, True)
 
@@ -87,24 +109,31 @@ class TestLeaderboardRender(XBlockHandlerTransactionTestCase):
 
         # Create more submissions than the max
         self._create_submissions_and_scores(xblock, [
-            ("test answer 2", 10),
-            ("test answer 3", 0)
+            (prepare_submission_for_serialization(("test answer 2 part 1", "test answer 2 part 2")), 10),
+            (prepare_submission_for_serialization(("test answer 3 part 1", "test answer 3 part 2")), 0)
         ])
         self._assert_scores(xblock, [
-            {"content": "test answer 2", "score": 10},
-            {"content": "test answer 1", "score": 1}
+            {"score": 10, "submission": create_submission_dict(
+                {"answer": prepare_submission_for_serialization((u"test answer 2 part 1", u"test answer 2 part 2"))},
+                xblock.prompts
+            )},
+            {"score": 1, "submission": create_submission_dict(
+                {"answer": prepare_submission_for_serialization((u"test answer 1 part 1", u"test answer 1 part 2"))},
+                xblock.prompts
+            )}
         ])
         self._assert_leaderboard_visible(xblock, True)
 
     @scenario('data/leaderboard_show.xml')
     def test_no_text_key_submission(self, xblock):
+        self.maxDiff = None
         # Instead of using the default submission as a dict with "text",
         # make the submission a string.
         self._create_submissions_and_scores(xblock, [("test answer", 1)], submission_key=None)
 
         # It should still work
         self._assert_scores(xblock, [
-            {"content": "test answer", "score": 1}
+            {"score": 1}
         ])
 
     @mock_s3
@@ -123,7 +152,7 @@ class TestLeaderboardRender(XBlockHandlerTransactionTestCase):
 
         # Expect that we default to an empty string for content
         self._assert_scores(xblock, [
-            {"content": "", "score": 1, "file": ""}
+            {"submission": "", "score": 1, "file": ""}
         ])
 
     @mock_s3
@@ -142,16 +171,23 @@ class TestLeaderboardRender(XBlockHandlerTransactionTestCase):
         key.set_contents_from_string("How d'ya do?")
         downloadUrl = api.get_download_url("foo")
         # Create a image and text submission
-        self._create_submissions_and_scores(xblock, [({"text": "test answer", "file_key": "foo"}, 1)], submission_key=None)
-
+        submission = prepare_submission_for_serialization(("test answer 1 part 1", "test answer 1 part 2"))
+        submission[u"file_key"] = "foo"
+        self._create_submissions_and_scores(xblock, [
+            (submission, 1)
+        ])
+        self.maxDiff = None
         # Expect that we retrieve both the text and the download URL for the file
         self._assert_scores(xblock, [
-            {"content": "test answer", "score": 1, "file": downloadUrl}
+            {"file": downloadUrl, "score": 1, "submission": create_submission_dict(
+                {"answer": submission},
+                xblock.prompts
+            )}
         ])
 
     def _create_submissions_and_scores(
         self, xblock, submissions_and_scores,
-        submission_key="text", points_possible=10
+        submission_key=None, points_possible=10
     ):
         """
         Create submissions and scores that should be displayed by the leaderboard.
@@ -172,10 +208,10 @@ class TestLeaderboardRender(XBlockHandlerTransactionTestCase):
             # These aren't displayed by the leaderboard, so we can set them
             # to anything without affecting the test.
             student_item = xblock.get_student_item_dict()
-            student_item['student_id'] = "student {num}".format(num=num)
-
+            # adding rand number to the student_id to make it unique.
+            student_item['student_id'] = "student {num} {num2}".format(num=num, num2=randint(2, 1000))
             if submission_key is not None:
-                answer = { submission_key: submission }
+                answer = {submission_key: submission}
             else:
                 answer = submission
 
@@ -195,6 +231,11 @@ class TestLeaderboardRender(XBlockHandlerTransactionTestCase):
                 is a dictionary of with keys 'content' (the submission text)
                 and 'score' (the integer number of points earned)
         """
+        # We temporarily set the maxDiff attribute to infinite so that we can
+        # have a full diff
+        maxDiff = self.maxDiff
+        self.maxDiff = None
+
         self._assert_path_and_context(
             xblock,
             'openassessmentblock/leaderboard/oa_leaderboard_show.html',
@@ -204,6 +245,8 @@ class TestLeaderboardRender(XBlockHandlerTransactionTestCase):
             },
             workflow_status='done'
         )
+
+        self.maxDiff = maxDiff
 
     def _assert_path_and_context(self, xblock, expected_path, expected_context, workflow_status=None):
         """
@@ -224,12 +267,18 @@ class TestLeaderboardRender(XBlockHandlerTransactionTestCase):
 
         """
         if workflow_status is not None:
-            xblock.get_workflow_info = mock.Mock(return_value={ 'status': workflow_status })
+            xblock.get_workflow_info = mock.Mock(return_value={'status': workflow_status})
 
         if workflow_status == 'done':
             path, context = xblock.render_leaderboard_complete(xblock.get_student_item_dict())
         else:
             path, context = xblock.render_leaderboard_incomplete()
+
+        # Strip query string parameters from the file URLs, since these are time-dependent
+        # (expiration and signature)
+        if "topscores" in expected_context:
+            context["topscores"] = self._clean_score_filenames(context["topscores"])
+            expected_context["topscores"] = self._clean_score_filenames(context["topscores"])
 
         self.assertEqual(path, expected_path)
         self.assertEqual(context, expected_context)
@@ -245,3 +294,14 @@ class TestLeaderboardRender(XBlockHandlerTransactionTestCase):
         fragment = self.runtime.render(xblock, "student_view")
         has_leaderboard = 'openassessment__leaderboard' in fragment.body_html()
         self.assertEqual(has_leaderboard, is_visible)
+
+    def _clean_score_filenames(self, scores):
+        """
+        Remove querystring parameters from the file name of the score.
+        """
+        for score in scores:
+            if score.get("file"):
+                url = urlparse(score["file"])
+                score["file"] = url.scheme + "://" + url.netloc + url.path
+
+        return scores

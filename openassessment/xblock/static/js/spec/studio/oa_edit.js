@@ -40,14 +40,15 @@ describe("OpenAssessment.StudioView", function() {
 
     var server = null;
     var view = null;
+    var data = null;
 
     var EXPECTED_SERVER_DATA = {
         title: "The most important of all questions.",
-        prompt: "How much do you like waffles?",
+        prompts: [{"description": "How much do you like waffles?"}, {description : 'How much do you like waffles 2?'}],
         feedbackPrompt: "",
         submissionStart: "2014-01-02T12:15",
         submissionDue: "2014-10-01T04:53",
-        imageSubmissionEnabled: false,
+        fileUploadType: "",
         leaderboardNum: 12,
         criteria: [
             {
@@ -126,13 +127,17 @@ describe("OpenAssessment.StudioView", function() {
 
         // Create the stub server
         server = new StubServer();
+        // mock data sent from backend
+        data = {
+            FILE_EXT_BLACK_LIST: ['exe','app']
+        };
 
         // Mock the runtime
         spyOn(runtime, 'notify');
 
         // Create the object under test
         var el = $('#openassessment-editor').get(0);
-        view = new OpenAssessment.StudioView(runtime, el, server);
+        view = new OpenAssessment.StudioView(runtime, el, server, data);
     });
 
     it("sends the editor context to the server", function() {
@@ -145,11 +150,11 @@ describe("OpenAssessment.StudioView", function() {
 
         // Top-level attributes
         expect(server.receivedData.title).toEqual(EXPECTED_SERVER_DATA.title);
-        expect(server.receivedData.prompt).toEqual(EXPECTED_SERVER_DATA.prompt);
+        expect(server.receivedData.prompts).toEqual(EXPECTED_SERVER_DATA.prompts);
         expect(server.receivedData.feedbackPrompt).toEqual(EXPECTED_SERVER_DATA.feedbackPrompt);
         expect(server.receivedData.submissionStart).toEqual(EXPECTED_SERVER_DATA.submissionStart);
         expect(server.receivedData.submissionDue).toEqual(EXPECTED_SERVER_DATA.submissionDue);
-        expect(server.receivedData.imageSubmissionEnabled).toEqual(EXPECTED_SERVER_DATA.imageSubmissionEnabled);
+        expect(server.receivedData.fileUploadType).toEqual(EXPECTED_SERVER_DATA.fileUploadType);
         expect(server.receivedData.leaderboardNum).toEqual(EXPECTED_SERVER_DATA.leaderboardNum);
 
         // Criteria
@@ -175,7 +180,7 @@ describe("OpenAssessment.StudioView", function() {
         server.isReleased = true;
 
         // Stub the confirmation step (avoid showing the dialog)
-        spyOn(view, 'confirmPostReleaseUpdate').andCallFake(
+        spyOn(view, 'confirmPostReleaseUpdate').and.callFake(
             function(onConfirm) { onConfirm(); }
         );
 

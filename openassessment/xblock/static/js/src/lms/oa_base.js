@@ -5,27 +5,27 @@ Args:
     runtime (Runtime): an XBlock runtime instance.
     element (DOM element): The DOM element representing this XBlock.
     server (OpenAssessment.Server): The interface to the XBlock server.
+    data (Object): The data object passed from XBlock backend.
 
 Returns:
     OpenAssessment.BaseView
 **/
-OpenAssessment.BaseView = function(runtime, element, server) {
+OpenAssessment.BaseView = function(runtime, element, server, data) {
     this.runtime = runtime;
     this.element = element;
     this.server = server;
     this.fileUploader = new OpenAssessment.FileUploader();
 
-    this.responseView = new OpenAssessment.ResponseView(this.element, this.server, this.fileUploader, this);
+    this.responseView = new OpenAssessment.ResponseView(this.element, this.server, this.fileUploader, this, data);
     this.trainingView = new OpenAssessment.StudentTrainingView(this.element, this.server, this);
     this.selfView = new OpenAssessment.SelfView(this.element, this.server, this);
     this.peerView = new OpenAssessment.PeerView(this.element, this.server, this);
     this.gradeView = new OpenAssessment.GradeView(this.element, this.server, this);
     this.leaderboardView = new OpenAssessment.LeaderboardView(this.element, this.server, this);
     this.messageView = new OpenAssessment.MessageView(this.element, this.server, this);
-    // Staff only information about student progress.
-    this.staffInfoView = new OpenAssessment.StaffInfoView(this.element, this.server, this);
+    // Staff-only area with information and tools for managing student submissions
+    this.staffAreaView = new OpenAssessment.StaffAreaView(this.element, this.server, this);
 };
-
 
 OpenAssessment.BaseView.prototype = {
 
@@ -38,7 +38,7 @@ OpenAssessment.BaseView.prototype = {
      */
     scrollToTop: function() {
         if ($.scrollTo instanceof Function) {
-            $(window).scrollTo($("#openassessment__steps", this.element), 800, {offset:-50});
+            $(window).scrollTo($("#openassessment__steps", this.element), 800, {offset: -50});
         }
     },
 
@@ -48,8 +48,8 @@ OpenAssessment.BaseView.prototype = {
     Args:
         parentSel (JQuery selector): CSS selector for the container element.
     **/
-    setUpCollapseExpand: function (parentSel) {
-        parentSel.on('click', '.ui-toggle-visibility__control', function (eventData) {
+    setUpCollapseExpand: function(parentSel) {
+        parentSel.on('click', '.ui-toggle-visibility__control', function(eventData) {
                 var sel = $(eventData.target).closest('.ui-toggle-visibility');
                 sel.toggleClass('is--collapsed');
             }
@@ -62,7 +62,7 @@ OpenAssessment.BaseView.prototype = {
     load: function() {
         this.responseView.load();
         this.loadAssessmentModules();
-        this.staffInfoView.load();
+        this.staffAreaView.load();
     },
 
     /**
@@ -108,16 +108,16 @@ OpenAssessment.BaseView.prototype = {
     toggleActionError: function(type, msg) {
         var element = this.element;
         var container = null;
-        if (type == 'save') {
+        if (type === 'save') {
             container = '.response__submission__actions';
         }
-        else if (type == 'submit' || type == 'peer' || type == 'self' || type == 'student-training') {
+        else if (type === 'submit' || type === 'peer' || type === 'self' || type === 'student-training') {
             container = '.step__actions';
         }
-        else if (type == 'feedback_assess') {
+        else if (type === 'feedback_assess') {
             container = '.submission__feedback__actions';
         }
-        else if (type == 'upload') {
+        else if (type === 'upload') {
             container = '#upload__error';
         }
 
@@ -144,17 +144,18 @@ OpenAssessment.BaseView.prototype = {
     showLoadError: function(step) {
         var container = '#openassessment__' + step;
         $(container).toggleClass('has--error', true);
-        $(container + ' .step__status__value i').removeClass().addClass('ico icon-warning-sign');
+        $(container + ' .step__status__value i').removeClass().addClass('icon fa fa-exclamation-triangle');
         $(container + ' .step__status__value .copy').html(gettext('Unable to Load'));
     }
 };
 
 /* XBlock JavaScript entry point for OpenAssessmentXBlock. */
-function OpenAssessmentBlock(runtime, element) {
+/* jshint unused:false */
+function OpenAssessmentBlock(runtime, element, data) {
     /**
     Render views within the base view on page load.
     **/
     var server = new OpenAssessment.Server(runtime, element);
-    var view = new OpenAssessment.BaseView(runtime, element, server);
+    var view = new OpenAssessment.BaseView(runtime, element, server, data);
     view.load();
 }

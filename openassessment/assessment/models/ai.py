@@ -5,8 +5,9 @@ from uuid import uuid4
 import json
 import logging
 from django.conf import settings
+from django.core import signals
 from django.core.files.base import ContentFile
-from django.core.cache import cache, get_cache
+from django.core.cache import cache, _create_cache
 from django.db import models, transaction, DatabaseError
 from django.utils.timezone import now
 from django_extensions.db.fields import UUIDField
@@ -21,11 +22,23 @@ AI_ASSESSMENT_TYPE = "AI"
 logger = logging.getLogger(__name__)
 
 
+def create_cache(backend, **kwargs):
+    """
+    Create cache backend. Using this custom function to avoid deprecation warnings.
+    """
+    cache = _create_cache(backend, **kwargs)
+    # Some caches -- python-memcached in particular -- need to do a cleanup at the
+    # end of a request cycle. If not implemented in a particular backend
+    # cache.close is a no-op
+    signals.request_finished.connect(cache.close)
+    return cache
+
+
 # Use an in-memory cache to hold classifier data, but allow settings to override this.
 # The classifier data will generally be larger than memcached's default max size
 CLASSIFIERS_CACHE_IN_MEM = getattr(
     settings, 'ORA2_CLASSIFIERS_CACHE_IN_MEM',
-    get_cache(
+    create_cache(
         'django.core.cache.backends.locmem.LocMemCache',
         LOCATION='openassessment.ai.classifiers_dict'
     )
@@ -33,11 +46,40 @@ CLASSIFIERS_CACHE_IN_MEM = getattr(
 
 CLASSIFIERS_CACHE_IN_FILE = getattr(
     settings, 'ORA2_CLASSIFIERS_CACHE_IN_FILE',
-    get_cache(
+    create_cache(
         'django.core.cache.backends.filebased.FileBasedCache',
         LOCATION='/tmp/ora2_classifier_cache'
     )
 )
+
+
+def essay_text_from_submission(submission):
+    """
+    Retrieve the submission text.
+
+    Submissions are arbitrary JSON-blobs, which *should*
+    contain a single key, "answer", containing the essay
+    submission text.
+    If not, though, assume we've been given the essay text
+    directly (convenient for testing).
+    """
+    if isinstance(submission, dict):
+        if 'answer' in submission:
+            # Format used for answer in examples.
+            if isinstance(submission['answer'], unicode):
+                return submission['answer']
+            # Initially there was one prompt and submission had the structure
+            # {'answer': {'text': 'The text.'}}
+            elif 'text' in submission['answer']:
+                essay_text = submission['answer']['text']
+            # When multiple prompts were introduced the structure of submission become:
+            # {'answer': {'parts': [{'text': 'The text part 1.'}, {'text': 'The text part 2.'}]}}
+            # We concatenate these parts and let AI grader evaluate the total text.
+            else:
+                essay_text = u'\n'.join([part['text'] for part in submission['answer']['parts']])
+    else:
+        essay_text = unicode(submission)
+    return essay_text
 
 
 class IncompleteClassifierSet(Exception):
@@ -114,7 +156,7 @@ class AIClassifierSet(models.Model):
     item_id = models.CharField(max_length=128, db_index=True)
 
     @classmethod
-    @transaction.commit_on_success
+    @transaction.atomic
     def create_classifier_set(cls, classifiers_dict, rubric, algorithm_id, course_id, item_id):
         """
         Create a set of classifiers.
@@ -635,7 +677,7 @@ class AITrainingWorkflow(AIWorkflow):
     training_examples = models.ManyToManyField(TrainingExample, related_name="+")
 
     @classmethod
-    @transaction.commit_on_success
+    @transaction.atomic
     def start_workflow(cls, examples, course_id, item_id, algorithm_id):
         """
         Start a workflow to track a training task.
@@ -764,7 +806,7 @@ class AIGradingWorkflow(AIWorkflow):
         return classifier_set is not None
 
     @classmethod
-    @transaction.commit_on_success
+    @transaction.atomic
     def start_workflow(cls, submission_uuid, rubric_dict, algorithm_id):
         """
         Start a grading workflow.
@@ -792,20 +834,10 @@ class AIGradingWorkflow(AIWorkflow):
         from openassessment.assessment.serializers import rubric_from_dict
         rubric = rubric_from_dict(rubric_dict)
 
-        # Retrieve the submission text
-        # Submissions are arbitrary JSON-blobs, which *should*
-        # contain a single key, "answer", containing the essay
-        # submission text.  If not, though, assume we've been
-        # given the essay text directly (convenient for testing).
-        if isinstance(submission, dict):
-            essay_text = submission.get('answer')
-        else:
-            essay_text = unicode(submission)
-
         # Create the workflow
         workflow = cls.objects.create(
             submission_uuid=submission_uuid,
-            essay_text=essay_text,
+            essay_text=essay_text_from_submission(submission),
             algorithm_id=algorithm_id,
             student_id=submission['student_item']['student_id'],
             item_id=submission['student_item']['item_id'],
@@ -820,7 +852,7 @@ class AIGradingWorkflow(AIWorkflow):
 
         return workflow
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def complete(self, criterion_scores):
         """
         Create an assessment with scores from the AI classifiers

@@ -52,8 +52,6 @@
   // STATE: hover and focus
   &:hover, &:focus {
     @include transform(scale(1.0));
-    border-color: $color-decorative-tertiary;
-    @include single-box-shadow(0, 1px, 1px, 0, $shadow-l2);
   }
 
   // STATE: is collapsed
@@ -166,7 +164,7 @@
     border-bottom: ($baseline-v/10) solid $heading-color;
     padding-bottom: ($baseline-v/4);
 
-    .ico {
+    .icon {
       display: inline-block;
       vertical-align: middle;
     }

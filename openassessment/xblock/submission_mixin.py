@@ -1,14 +1,17 @@
+import json
 import logging
 
 from xblock.core import XBlock
 
 from submissions import api
 from openassessment.fileupload import api as file_upload_api
-from openassessment.fileupload.api import FileUploadError
+from openassessment.fileupload.exceptions import FileUploadError
 from openassessment.workflow import api as workflow_api
 from openassessment.workflow.errors import AssessmentWorkflowError
 from .resolve_dates import DISTANT_FUTURE
 
+from data_conversion import create_submission_dict, prepare_submission_for_serialization
+from validation import validate_submission
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +28,24 @@ class SubmissionMixin(object):
     work outside the scope of OpenAssessmentBlock.
 
     """
+
+    ALLOWED_IMAGE_MIME_TYPES = ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png']
+
+    ALLOWED_FILE_MIME_TYPES = ['application/pdf'] + ALLOWED_IMAGE_MIME_TYPES
+
+    # taken from http://www.howtogeek.com/137270/50-file-extensions-that-are-potentially-dangerous-on-windows/
+    # and http://pcsupport.about.com/od/tipstricks/a/execfileext.htm
+    # left out .js and office extensions
+    FILE_EXT_BLACK_LIST = [
+        'exe', 'msi', 'app', 'dmg', 'com', 'pif', 'application', 'gadget',
+        'msp', 'scr', 'hta', 'cpl', 'msc', 'jar', 'bat', 'cmd', 'vb', 'vbs',
+        'jse', 'ws', 'wsf', 'wsc', 'wsh', 'scf', 'lnk', 'inf', 'reg', 'ps1',
+        'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'msh', 'msh1', 'msh2', 'mshxml',
+        'msh1xml', 'msh2xml', 'action', 'apk', 'app', 'bin', 'command', 'csh',
+        'ins', 'inx', 'ipa', 'isu', 'job', 'mst', 'osx', 'out', 'paf', 'prg',
+        'rgs', 'run', 'sct', 'shb', 'shs', 'u3p', 'vbscript', 'vbe', 'workflow',
+        'htm', 'html',
+    ]
 
     @XBlock.json_handler
     def submit(self, data, suffix=''):
@@ -54,7 +75,15 @@ class SubmissionMixin(object):
             )
 
         status = False
-        student_sub = data['submission']
+        student_sub_data = data['submission']
+        success, msg = validate_submission(student_sub_data, self.prompts, self._)
+        if not success:
+            return (
+                False,
+                'EBADARGS',
+                msg
+            )
+
         student_item_dict = self.get_student_item_dict()
 
         # Short-circuit if no user is defined (as in Studio Preview mode)
@@ -74,7 +103,7 @@ class SubmissionMixin(object):
             try:
                 submission = self.create_submission(
                     student_item_dict,
-                    student_sub
+                    student_sub_data
                 )
             except api.SubmissionRequestError as err:
 
@@ -132,8 +161,14 @@ class SubmissionMixin(object):
             dict: Contains a bool 'success' and unicode string 'msg'.
         """
         if 'submission' in data:
+            student_sub_data = data['submission']
+            success, msg = validate_submission(student_sub_data, self.prompts, self._)
+            if not success:
+                return {'success': False, 'msg': msg}
             try:
-                self.saved_response = unicode(data['submission'])
+                self.saved_response = json.dumps(
+                    prepare_submission_for_serialization(student_sub_data)
+                )
                 self.has_saved = True
 
                 # Emit analytics event...
@@ -149,13 +184,13 @@ class SubmissionMixin(object):
         else:
             return {'success': False, 'msg': self._(u"This response was not submitted.")}
 
-    def create_submission(self, student_item_dict, student_sub):
+    def create_submission(self, student_item_dict, student_sub_data):
 
         # Store the student's response text in a JSON-encodable dict
         # so that later we can add additional response fields.
-        student_sub_dict = {'text': student_sub}
+        student_sub_dict = prepare_submission_for_serialization(student_sub_data)
 
-        if self.allow_file_upload:
+        if self.file_upload_type:
             student_sub_dict['file_key'] = self._get_student_item_key()
         submission = api.create_submission(student_item_dict, student_sub_dict)
         self.create_workflow(submission["uuid"])
@@ -186,13 +221,25 @@ class SubmissionMixin(object):
             A URL to be used to upload content associated with this submission.
 
         """
-        if "contentType" not in data:
-            return {'success': False, 'msg': self._(u"Must specify contentType.")}
+        if 'contentType' not in data or 'filename' not in data:
+            return {'success': False, 'msg': self._(u"There was an error uploading your file.")}
         content_type = data['contentType']
+        file_name = data['filename']
+        file_name_parts = file_name.split('.')
+        file_ext = file_name_parts[-1] if len(file_name_parts) > 1 else None
 
-        if not content_type.startswith('image/'):
-            return {'success': False, 'msg': self._(u"contentType must be an image.")}
+        if self.file_upload_type == 'image' and content_type not in self.ALLOWED_IMAGE_MIME_TYPES:
+            return {'success': False, 'msg': self._(u"Content type must be GIF, PNG or JPG.")}
 
+        if self.file_upload_type == 'pdf-and-image' and content_type not in self.ALLOWED_FILE_MIME_TYPES:
+            return {'success': False, 'msg': self._(u"Content type must be PDF, GIF, PNG or JPG.")}
+
+        if self.file_upload_type == 'custom' and file_ext not in self.white_listed_file_types:
+            return {'success': False, 'msg': self._(u"File type must be one of the following types: {}").format(
+                ', '.join(self.white_listed_file_types))}
+
+        if file_ext in self.FILE_EXT_BLACK_LIST:
+            return {'success': False, 'msg': self._(u"File type is not allowed.")}
         try:
             key = self._get_student_item_key()
             url = file_upload_api.get_upload_url(key, content_type)
@@ -232,8 +279,9 @@ class SubmissionMixin(object):
             A string representation of the key.
 
         """
+        student_item_dict = self.get_student_item_dict()
         return u"{student_id}/{course_id}/{item_id}".format(
-            **self.get_student_item_dict()
+            **student_item_dict
         )
 
     def get_download_url_from_submission(self, submission):
@@ -291,7 +339,8 @@ class SubmissionMixin(object):
         Returns:
             unicode
         """
-        return self._(u'This response has been saved but not submitted.') if self.has_saved else self._(u'This response has not been saved.')
+        return self._(u'This response has been saved but not submitted.') if self.has_saved else self._(
+            u'This response has not been saved.')
 
     @XBlock.handler
     def render_submission(self, data, suffix=''):
@@ -337,13 +386,15 @@ class SubmissionMixin(object):
         if due_date < DISTANT_FUTURE:
             context["submission_due"] = due_date
 
-        context['allow_file_upload'] = self.allow_file_upload
+        context['file_upload_type'] = self.file_upload_type
         context['allow_latex'] = self.allow_latex
         context['has_peer'] = 'peer-assessment' in self.assessment_steps
         context['has_self'] = 'self-assessment' in self.assessment_steps
 
-        if self.allow_file_upload:
+        if self.file_upload_type:
             context['file_url'] = self._get_download_url()
+        if self.file_upload_type == 'custom':
+            context['white_listed_file_types'] = self.white_listed_file_types
 
         if not workflow and problem_closed:
             if reason == 'due':
@@ -352,7 +403,21 @@ class SubmissionMixin(object):
                 context['submission_start'] = start_date
                 path = 'openassessmentblock/response/oa_response_unavailable.html'
         elif not workflow:
-            context['saved_response'] = self.saved_response
+            # For backwards compatibility. Initially, problems had only one prompt
+            # and a string answer. We convert it to the appropriate dict.
+            try:
+                json.loads(self.saved_response)
+                saved_response = {
+                    'answer': json.loads(self.saved_response),
+                }
+            except ValueError:
+                saved_response = {
+                    'answer': {
+                        'text': self.saved_response,
+                    },
+                }
+
+            context['saved_response'] = create_submission_dict(saved_response, self.prompts)
             context['save_status'] = self.save_status
             context['submit_enabled'] = self.saved_response != ''
             path = "openassessmentblock/response/oa_response.html"
@@ -372,12 +437,13 @@ class SubmissionMixin(object):
             student_submission = self.get_user_submission(
                 workflow["submission_uuid"]
             )
-            context["student_submission"] = student_submission
+            context["student_submission"] = create_submission_dict(student_submission, self.prompts)
             path = 'openassessmentblock/response/oa_response_graded.html'
         else:
-            context["student_submission"] = self.get_user_submission(
+            student_submission = self.get_user_submission(
                 workflow["submission_uuid"]
             )
+            context["student_submission"] = create_submission_dict(student_submission, self.prompts)
             path = 'openassessmentblock/response/oa_response_submitted.html'
 
         return path, context

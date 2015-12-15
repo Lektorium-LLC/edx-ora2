@@ -63,16 +63,31 @@ VALID_ASSESSMENT_TYPES = [
     u'student-training'
 ]
 
+VALID_UPLOAD_FILE_TYPES = [
+    u'',
+    u'image',
+    u'pdf-and-image',
+    u'custom'
+]
 
 # Schema definition for an update from the Studio JavaScript editor.
 EDITOR_UPDATE_SCHEMA = Schema({
-    Required('prompt'): utf8_validator,
+    Required('prompts'): [
+        Schema({
+            Required('description'): utf8_validator,
+        })
+    ],
     Required('title'): utf8_validator,
     Required('feedback_prompt'): utf8_validator,
     Required('feedback_default_text'): utf8_validator,
     Required('submission_start'): Any(datetime_validator, None),
     Required('submission_due'): Any(datetime_validator, None),
-    Required('allow_file_upload'): bool,
+    'allow_file_upload': bool,  # Backwards compatibility.
+    Required('file_upload_type', default=None): Any(
+        All(utf8_validator, In(VALID_UPLOAD_FILE_TYPES)),
+        None
+    ),
+    'white_listed_file_types': utf8_validator,
     Required('allow_latex'): bool,
     Required('leaderboard_show'): int,
     Required('assessments'): [
@@ -84,7 +99,7 @@ EDITOR_UPDATE_SCHEMA = Schema({
             'must_be_graded_by': All(int, Range(min=0)),
             'examples': [
                 Schema({
-                    Required('answer'): utf8_validator,
+                    Required('answer'): [utf8_validator],
                     Required('options_selected'): [
                         Schema({
                             Required('criterion'): utf8_validator,

@@ -13,12 +13,12 @@
                 {% if training_start %}
                     <span class="step__deadline">
                         {# Translators: This string displays a date to the user, then tells them the time until that date.  Example: "available August 13th, 2014 (in 5 days and 45 minutes)" #}
-                        {% blocktrans with start_date=training_start|utc|date:"N j, Y H:i e" time_until=training_start|timeuntil %}available <span class="date"> {{ start_date }} (in {{ time_until }}) </span>{% endblocktrans %}
+                        {% blocktrans with start_date=training_start|utc|date:"N j, Y H:i e" time_until=training_start|timeuntil %}available <span class="date">{{ start_date }} (in {{ time_until }})</span>{% endblocktrans %}
                     </span>
                 {% elif training_due %}
                     <span class="step__deadline">
                         {# Translators: This string displays a date to the user, then tells them the time until that date.  Example: "due August 13th, 2014 (in 5 days and 45 minutes)" #}
-                        {% blocktrans with due_date=training_due|utc|date:"N j, Y H:i e" time_until=training_due|timeuntil %}due <span class="date">{{ due_date }}</span> (in {{ time_until }}){% endblocktrans %}
+                        {% blocktrans with due_date=training_due|utc|date:"N j, Y H:i e" time_until=training_due|timeuntil %}due <span class="date">{{ due_date }} (in {{ time_until }})</span>{% endblocktrans %}
                     </span>
                 </span>
                 {% endif %}
@@ -72,9 +72,8 @@
                         {% endwith %}
                     </header>
 
-                    <div class="student-training__display__response">
-                        {{ training_essay|linebreaks }}
-                    </div>
+                    {% include "openassessmentblock/oa_submission_answer.html" with answer=training_essay.answer answer_text_label="The response to the question above:" %}
+
                 </article>
 
                 <form id="student-training--001__assessment" class="student-training__assessment" method="post">
@@ -87,7 +86,7 @@
                                     id="assessment__rubric__question--{{ criterion.order_num }}"
                                 >
                                     <h4 class="question__title ui-toggle-visibility__control">
-                                        <i class="ico icon-caret-right"></i>
+                                        <i class="icon fa fa-caret-right"></i>
                                         <span class="question__title__copy">{{ criterion.prompt }}</span>
                                         <span class="label--required sr">* ({% trans "Required" %})</span>
                                     </h4>
@@ -144,7 +143,6 @@
                     <li class="list--actions__item">
                         <button type="submit" id="student-training--001__assessment__submit" class="action action--submit is--disabled">
                             <span class="copy">{% trans "Compare your selections with the instructor's selections" %}</span>
-                            <i class="ico icon-caret-right"></i>
                         </button>
                     </li>
                 </ul>

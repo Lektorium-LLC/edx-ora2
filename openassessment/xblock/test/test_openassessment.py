@@ -4,7 +4,7 @@ Tests the Open Assessment XBlock functionality.
 from collections import namedtuple
 import datetime as dt
 import pytz
-from mock import Mock, patch, MagicMock
+from mock import Mock, patch, MagicMock, PropertyMock
 
 from openassessment.xblock import openassessmentblock
 from openassessment.xblock.resolve_dates import DISTANT_PAST, DISTANT_FUTURE
@@ -48,20 +48,13 @@ class TestOpenAssessment(XBlockHandlerTestCase):
         self.assertIsNotNone(grade_response)
         self.assertTrue(grade_response.body.find("openassessment__grade"))
 
-    @scenario('data/line_breaks.xml')
-    def test_prompt_line_breaks(self, xblock):
-        # Verify that prompts with multiple lines retain line breaks.
-        xblock_fragment = self.runtime.render(xblock, "student_view")
-        expected_prompt = u"<p><br />Line 1</p><p>Line 2</p><p>Line 3<br /></p>"
-        self.assertIn(expected_prompt, xblock_fragment.body_html())
-
     @scenario('data/empty_prompt.xml')
     def test_prompt_intentionally_empty(self, xblock):
         # Verify that prompts intentionally left empty don't create DOM elements
         xblock_fragment = self.runtime.render(xblock, "student_view")
         body_html = xblock_fragment.body_html()
         present_prompt_text = "you'll provide a response to the question"
-        missing_article = u'<article class="openassessment__prompt'
+        missing_article = u'<article class="submission__answer__part__prompt'
         self.assertIn(present_prompt_text, body_html)
         self.assertNotIn(missing_article, body_html)
 
@@ -126,6 +119,64 @@ class TestOpenAssessment(XBlockHandlerTestCase):
         self.assertTrue(resp.body.find('Tuesday, April 01, 2014'))
         self.assertTrue(resp.body.find('Thursday, May 01, 2014'))
 
+    @scenario('data/basic_scenario.xml')
+    def test_formatted_dates_for_beta_tester_with_days_early(self, xblock):
+        """Test dates for beta tester with days early"""
+
+        # Set start/due dates
+        xblock.start = dt.datetime(2014, 4, 6, 1, 1, 1)
+        xblock.due = dt.datetime(2014, 5, 1)
+        xblock.xmodule_runtime = Mock(
+            course_id='test_course',
+            anonymous_student_id='test_student',
+            days_early_for_beta=5,
+            user_is_staff=False,
+            user_is_beta_tester=True
+        )
+        self.assertEqual(xblock.xmodule_runtime.days_early_for_beta, 5)
+        request = namedtuple('Request', 'params')
+        request.params = {}
+        resp = xblock.render_peer_assessment(request)
+        self.assertTrue(resp.body.find('Tuesday, April 01, 2014'))
+        self.assertTrue(resp.body.find('Thursday, May 01, 2014'))
+
+    @patch.object(openassessmentblock.OpenAssessmentBlock, 'is_beta_tester', new_callable=PropertyMock)
+    @scenario('data/basic_scenario.xml')
+    def test_formatted_dates_for_beta_tester_without_days_early(self, xblock, mock_is_beta_tester):
+        """Test dates for beta tester without days early"""
+
+        mock_is_beta_tester.return_value = True
+
+        # Set start/due dates
+        xblock.start = dt.datetime(2014, 4, 6, 1, 1, 1)
+        xblock.due = dt.datetime(2014, 5, 1)
+        request = namedtuple('Request', 'params')
+        request.params = {}
+        resp = xblock.render_peer_assessment(request)
+        self.assertTrue(resp.body.find('Tuesday, April 06, 2014'))
+        self.assertTrue(resp.body.find('Thursday, May 01, 2014'))
+
+    @scenario('data/basic_scenario.xml')
+    def test_formatted_dates_for_beta_tester_with_nonetype_days_early(self, xblock):
+        """Test dates for beta tester with NoneType days early"""
+
+        # Set start/due dates
+        xblock.start = dt.datetime(2014, 4, 6, 1, 1, 1)
+        xblock.due = dt.datetime(2014, 5, 1)
+        xblock.xmodule_runtime = Mock(
+            course_id='test_course',
+            anonymous_student_id='test_student',
+            days_early_for_beta=None,
+            user_is_staff=False,
+            user_is_beta_tester=True
+        )
+        self.assertEqual(xblock.xmodule_runtime.days_early_for_beta, None)
+        request = namedtuple('Request', 'params')
+        request.params = {}
+        resp = xblock.render_peer_assessment(request)
+        self.assertTrue(resp.body.find('Tuesday, April 06, 2014'))
+        self.assertTrue(resp.body.find('Thursday, May 01, 2014'))
+
     @scenario('data/basic_scenario.xml', user_id='Bob')
     def test_default_fields(self, xblock):
 
@@ -170,6 +221,39 @@ class TestOpenAssessment(XBlockHandlerTestCase):
         # Check that we can render the student view without error
         self.runtime.render(xblock, 'student_view')
 
+    @scenario('data/basic_scenario.xml', user_id='Bob')
+    def test_prompts_fields(self, xblock):
+
+        self.assertEqual(xblock.prompts, [
+            {
+                'description': (u'Given the state of the world today, what do you think should be done to '
+                                u'combat poverty? Please answer in a short essay of 200-300 words.')
+            },
+            {
+                'description': (u'Given the state of the world today, what do you think should be done to '
+                                u'combat pollution?')
+            }
+        ])
+
+        xblock.prompt = None
+        self.assertEqual(xblock.prompts, [{'description': ''}])
+
+        xblock.prompt = 'Prompt.'
+        self.assertEqual(xblock.prompts, [{'description': 'Prompt.'}])
+
+        xblock.prompt = '[{"description": "Prompt 1."}, {"description": "Prompt 2."}, {"description": "Prompt 3."}]'
+        self.assertEqual(xblock.prompts, [
+            {'description': 'Prompt 1.'}, {'description': 'Prompt 2.'}, {'description': 'Prompt 3.'}
+        ])
+
+        xblock.prompts = None
+        self.assertEqual(xblock.prompt, None)
+
+        xblock.prompts = [{'description': 'Prompt.'}]
+        self.assertEqual(xblock.prompt, 'Prompt.')
+
+        xblock.prompts = [{'description': 'Prompt 4.'}, {'description': 'Prompt 5.'}]
+        self.assertEqual(xblock.prompt, '[{"description": "Prompt 4."}, {"description": "Prompt 5."}]')
 
 class TestDates(XBlockHandlerTestCase):
 

@@ -18,7 +18,7 @@
                 {% elif self_due %}
                 <span class="step__deadline">
                     {# Translators: This string displays a date to the user, then tells them the time until that date.  Example: "due August 13th, 2014 (in 5 days and 45 minutes)" #}
-                    {% blocktrans with due_date=self_due|utc|date:"N j, Y H:i e" time_until=self_due|timeuntil %}due <span class="date">{{ due_date }}</span> (in {{ time_until }}){% endblocktrans %}
+                    {% blocktrans with due_date=self_due|utc|date:"N j, Y H:i e" time_until=self_due|timeuntil %}due <span class="date">{{ due_date }} (in {{ time_until }})</span>{% endblocktrans %}
                 </span>
                 {% endif %}
             </span>
@@ -43,21 +43,9 @@
                         <h3 class="self-assessment__display__title">{% trans "Your Response" %}</h3>
                     </header>
 
-                    <div class="self-assessment__display__response">
-                        {{ self_submission.answer.text|linebreaks }}
-                    </div>
+                    {% include "openassessmentblock/oa_submission_answer.html" with answer=self_submission.answer answer_text_label="Your response to the question above:" %}
 
-                    {% if allow_file_upload and self_file_url %}
-                    <header class="self-assessment__display__header">
-                        <h3 class="self-assessment__display__title">
-                            {% trans "Associated Image" %}
-                        </h3>
-                    </header>
-
-                    <div class="self-assessment__display__image">
-                        <img class="submission--image" alt="{% trans "The image associated with your submission." %}" src="{{ self_file_url }}"/>
-                    </div>
-                    {% endif %}
+                    {% include "openassessmentblock/oa_uploaded_file.html" with file_upload_type=file_upload_type file_url=self_file_url header="Associated File" class_prefix="self-assessment" %}
                 </article>
 
                 <form id="self-assessment--001__assessment" class="self-assessment__assessment" method="post">
@@ -75,7 +63,6 @@
                     <li class="list--actions__item">
                         <button type="submit" id="self-assessment--001__assessment__submit" class="action action--submit is--disabled">
                             <span class="copy">{% trans "Submit Your Assessment" %}</span>
-                            <i class="ico icon-caret-right"></i>
                         </button>
                     </li>
                 </ul>

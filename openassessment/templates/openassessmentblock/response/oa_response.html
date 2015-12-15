@@ -18,7 +18,7 @@
                 {% elif submission_due %}
                 <span class="step__deadline">
                     {# Translators: This string displays a date to the user, then tells them the time until that date.  Example: "due August 13th, 2014 (in 5 days and 45 minutes)" #}
-                    {% blocktrans with due_date=submission_due|utc|date:"N j, Y H:i e" time_until=submission_due|timeuntil %}due <span class="date"> {{ due_date }} (in {{ time_until }})</span>{% endblocktrans %}
+                    {% blocktrans with due_date=submission_due|utc|date:"N j, Y H:i e" time_until=submission_due|timeuntil %}due <span class="date">{{ due_date }} (in {{ time_until }})</span>{% endblocktrans %}
                 </span>
                 {% endif %}
             </span>
@@ -52,39 +52,44 @@
             <div class="step__content">
                 <form id="response__submission" class="response__submission">
                     <ol class="list list--fields response__submission__content">
-                        <li class="field field--textarea submission__answer" id="submission__answer">
-                            <label class="sr" for="submission__answer__value">{% trans "Enter your response to the question." %}</label>
-                            <textarea
-                                id="submission__answer__value"
-                                placeholder=""
-                                maxlength="100000"
-                            >{{ saved_response }}</textarea>
-                            <span class="tip">{% trans "You may continue to work on your response until you submit it." %}</span>
-                        </li>
-                        {% if allow_file_upload %}
+                        {% for part in saved_response.answer.parts %}
+                            <li class="submission__answer__part">
+                                <article class="submission__answer__part__prompt ui-toggle-visibility">
+                                    <h2 class="submission__answer__part__prompt__title">{% trans "The prompt for this section." %}</h2>
+
+                                    <div class="submission__answer__part__prompt__copy ui-toggle-visibility__content">
+                                        {{ part.prompt.description|linebreaks }}
+                                    </div>
+                                </article>
+                                <div class="field field--textarea submission__answer__part__text">
+                                    <label class="sr" for="submission__answer__part__text__{{ forloop.counter }}">{% trans "Your response to the question above." %}</label>
+                                    <textarea
+                                        id="submission__answer__part__text__{{ forloop.counter }}"
+                                        class="submission__answer__part__text__value"
+                                        placeholder="{% trans "Enter your response to the question above." %}"
+                                        maxlength="100000"
+                                    >{{ part.text }}</textarea>
+                                </div>
+                            </li>
+                        {% endfor %}
+                        {% if file_upload_type %}
                         <li class="field">
                             <div id="upload__error">
                                 <div class="message message--inline message--error message--error-server">
-                                    <h3 class="message__title">{% trans "We could not upload this image" %}</h3>
+                                    <h3 class="message__title">{% trans "We could not upload this file" %}</h3>
                                     <div class="message__content"></div>
                                 </div>
                             </div>
-                            <label class="sr" for="submission__answer__upload">{% trans "Select an image to upload for this submission." %}</label>
+                            <label class="sr" for="submission__answer__upload">{% trans "Select a file to upload for this submission." %}</label>
                             <input type="file" id="submission__answer__upload" class="file--upload">
-                            <button type="submit" id="file__upload" class="action action--upload is--disabled">{% trans "Upload your image" %}</button>
-                        </li>
-                        <li>
-                            <div class="submission__answer__display__image is--hidden">
-                                <img id="submission__answer__image"
-                                     class="submission--image"
-                                     {% if file_url %}
-                                     alt="{% trans "The image associated with your submission." %}"
-                                     {% endif %}
-                                     src="{{ file_url }}"/>
-                            </div>
+                            <button type="submit" id="file__upload" class="action action--upload is--disabled">{% trans "Upload your file" %}</button>
                         </li>
                         {% endif %}
+
+                        {% include "openassessmentblock/oa_uploaded_file.html" with file_upload_type=file_upload_type file_url=file_url class_prefix="submission__answer"%}
                     </ol>
+
+                    <span class="tip">{% trans "You may continue to work on your response until you submit it." %}</span>
 
                     <div class="response__submission__actions">
                         <div class="message message--inline message--error message--error-server">
@@ -137,7 +142,6 @@
                         <a aria-role="button" href="#" id="step--response__submit"
                             class="action action--submit step--response__submit {{ submit_enabled|yesno:",is--disabled" }}">
                             <span class="copy">{% trans "Submit your response and move to the next step" %}</span>
-                            <i class="ico icon-caret-right"></i>
                         </a>
                     </li>
                 </ul>
