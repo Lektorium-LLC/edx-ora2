@@ -52,7 +52,7 @@ describe("OpenAssessment.StudentTrainingListener", function() {
             {
                 criterion_with_two_options: {
                     "": "Not Selected",
-                    option_1: "Fair - 1 points",
+                    option_1: "Fair - 1 point",
                     option_2: "Good - 2 points"
                 }
             }
@@ -86,7 +86,7 @@ describe("OpenAssessment.StudentTrainingListener", function() {
             {
                 criterion_with_two_options: {
                     "": "Not Selected",
-                    option_1: "Fair - 1 points",
+                    option_1: "Fair - 1 point",
                     option_2: "Good - 2 points"
                 }
             }
@@ -151,7 +151,7 @@ describe("OpenAssessment.StudentTrainingListener", function() {
             {
                 criterion_with_two_options: {
                     "": "Not Selected",
-                    option_1: "Fair - 1 points",
+                    option_1: "Fair - 1 point",
                     option_2: "Good - 2 points"
                 }
             }
@@ -262,7 +262,7 @@ describe("OpenAssessment.StudentTrainingListener", function() {
             {
                 criterion_with_two_options: {
                     "": "Not Selected",
-                    option_1: "Fair - 1 points",
+                    option_1: "Fair - 1 point",
                     option_2: "Good - 2 points",
                 },
                 new_criterion: {
@@ -284,7 +284,7 @@ describe("OpenAssessment.StudentTrainingListener", function() {
             {
                 criterion_with_two_options: {
                     "": "Not Selected",
-                    option_1: "Fair - 1 points",
+                    option_1: "Fair - 1 point",
                     option_2: "Good - 2 points",
                 },
                 new_criterion: {
@@ -429,14 +429,14 @@ describe("OpenAssessment.StudentTrainingListenerWithTrainingExamples", function(
     });
 
 
-    it("adds a criterion and an option, then adds a training example", function (){
+    it("adds a criterion and an option, then adds a training example", function(){
         // Initial state, set by the fixture
         assertExampleLabels(
             listener.examplesOptionsLabels(),
             {
                 criterion_with_two_options: {
                     "": "Not Selected",
-                    option_1: "Fair - 1 points",
+                    option_1: "Fair - 1 point",
                     option_2: "Good - 2 points"
                 }
             }

@@ -16,7 +16,6 @@ OpenAssessment.StudentTrainingView = function(element, server, baseView) {
     this.rubric = null;
 };
 
-
 OpenAssessment.StudentTrainingView.prototype = {
 
     /**
@@ -31,7 +30,7 @@ OpenAssessment.StudentTrainingView.prototype = {
                 view.server.renderLatex($('#openassessment__student-training', view.element));
                 view.installHandlers();
             }
-        ).fail(function(errMsg) {
+        ).fail(function() {
             view.baseView.showLoadError('student-training');
         });
     },
@@ -85,8 +84,8 @@ OpenAssessment.StudentTrainingView.prototype = {
         var baseView = this.baseView;
         this.server.trainingAssess(options).done(
             function(corrections) {
-                var incorrect = $("#openassessment__student-training--incorrect", this.element);
-                var instructions = $("#openassessment__student-training--instructions", this.element);
+                var incorrect = $("#openassessment__student-training--incorrect", view.element);
+                var instructions = $("#openassessment__student-training--instructions", view.element);
 
                 if (!view.rubric.showCorrections(corrections)) {
                     view.load();

@@ -13,6 +13,8 @@ from openassessment.assessment.api import ai as ai_api
 from openassessment.assessment.errors import SelfAssessmentError, PeerAssessmentError
 from submissions import api as sub_api
 
+from data_conversion import create_submission_dict
+
 
 class GradeMixin(object):
     """Grade Mixin introduces all handlers for displaying grades
@@ -133,13 +135,13 @@ class GradeMixin(object):
         context = {
             'score': score,
             'feedback_text': feedback_text,
-            'student_submission': student_submission,
+            'student_submission': create_submission_dict(student_submission, self.prompts),
             'peer_assessments': peer_assessments,
             'self_assessment': self_assessment,
             'example_based_assessment': example_based_assessment,
             'rubric_criteria': self._rubric_criteria_grade_context(peer_assessments, self_assessment),
             'has_submitted_feedback': has_submitted_feedback,
-            'allow_file_upload': self.allow_file_upload,
+            'file_upload_type': self.file_upload_type,
             'allow_latex': self.allow_latex,
             'file_url': self.get_download_url_from_submission(student_submission)
         }

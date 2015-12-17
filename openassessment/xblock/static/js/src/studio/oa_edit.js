@@ -3,18 +3,20 @@
  The constructor initializes the DOM for editing.
 
  Args:
-    runtime (Runtime): an XBlock runtime instance.
-    element (DOM element): The DOM element representing this XBlock.
-    server (OpenAssessment.Server): The interface to the XBlock server.
+ runtime (Runtime): an XBlock runtime instance.
+ element (DOM element): The DOM element representing this XBlock.
+ server (OpenAssessment.Server): The interface to the XBlock server.
+ data (Object literal): The data object passed from XBlock backend.
 
  Returns:
-    OpenAssessment.StudioView
-**/
+ OpenAssessment.StudioView
+ **/
 
-OpenAssessment.StudioView = function(runtime, element, server) {
+OpenAssessment.StudioView = function(runtime, element, server, data) {
     this.element = element;
     this.runtime = runtime;
     this.server = server;
+    this.data = data;
 
     // Resize the editing modal
     this.fixModalHeight();
@@ -55,13 +57,13 @@ OpenAssessment.StudioView = function(runtime, element, server) {
     assessmentLookupDictionary[exampleBasedAssessmentView.getID()] = exampleBasedAssessmentView;
 
     this.settingsView = new OpenAssessment.EditSettingsView(
-        $("#oa_basic_settings_editor", this.element).get(0), assessmentLookupDictionary
+        $("#oa_basic_settings_editor", this.element).get(0), assessmentLookupDictionary, data
     );
 
     // Initialize the rubric tab view
     this.rubricView = new OpenAssessment.EditRubricView(
         $("#oa_rubric_editor_wrapper", this.element).get(0),
-         new OpenAssessment.Notifier([
+        new OpenAssessment.Notifier([
             studentTrainingListener
         ])
     );
@@ -74,9 +76,9 @@ OpenAssessment.StudioView = function(runtime, element, server) {
 OpenAssessment.StudioView.prototype = {
 
     /**
-    Adjusts the modal's height, position and padding to be larger for OA editing only (Does not impact other modals)
-    **/
-    fixModalHeight: function () {
+     Adjusts the modal's height, position and padding to be larger for OA editing only (Does not impact other modals)
+     **/
+    fixModalHeight: function() {
         // Add the full height class to every element from the XBlock
         // to the modal window in Studio.
         $(this.element)
@@ -91,14 +93,14 @@ OpenAssessment.StudioView.prototype = {
     },
 
     /**
-    Initializes the tabs that seperate the sections of the editor.
+     Initializes the tabs that seperate the sections of the editor.
 
-    Because this function relies on the OpenAssessment Name space, the tab that it first
-    active will be the one that the USER was presented with, regardless of which editor they
-    were using.  I.E.  If I leave Editor A in the settings state, and enter editor B, editor B
-    will automatically open with the settings state.
+     Because this function relies on the OpenAssessment Name space, the tab that it first
+     active will be the one that the USER was presented with, regardless of which editor they
+     were using.  I.E.  If I leave Editor A in the settings state, and enter editor B, editor B
+     will automatically open with the settings state.
 
-    **/
+     **/
     initializeTabs: function() {
         // If this is the first editor that the user has opened, default to the prompt view.
         if (typeof(OpenAssessment.lastOpenEditingTab) === "undefined") {
@@ -122,10 +124,10 @@ OpenAssessment.StudioView.prototype = {
     },
 
     /**
-    Save the problem's XML definition to the server.
-    If the problem has been released, make the user confirm the save.
-    **/
-    save: function () {
+     Save the problem's XML definition to the server.
+     If the problem has been released, make the user confirm the save.
+     **/
+    save: function() {
         var view = this;
         this.saveTabState();
 
@@ -152,7 +154,7 @@ OpenAssessment.StudioView.prototype = {
             // Check whether the problem has been released; if not,
             // warn the user and allow them to cancel.
             this.server.checkReleased().done(
-                function (isReleased) {
+                function(isReleased) {
                     if (isReleased) {
                         view.confirmPostReleaseUpdate($.proxy(view.updateEditorContext, view));
                     }
@@ -160,30 +162,30 @@ OpenAssessment.StudioView.prototype = {
                         view.updateEditorContext();
                     }
                 }
-            ).fail(function (errMsg) {
+            ).fail(function(errMsg) {
                 view.showError(errMsg);
             });
         }
     },
 
     /**
-    Make the user confirm that he/she wants to update a problem
-    that has already been released.
+     Make the user confirm that he/she wants to update a problem
+     that has already been released.
 
-    Args:
-        onConfirm (function): A function that accepts no arguments,
-           executed if the user confirms the update.
-    **/
-    confirmPostReleaseUpdate: function (onConfirm) {
+     Args:
+     onConfirm (function): A function that accepts no arguments,
+     executed if the user confirms the update.
+     **/
+    confirmPostReleaseUpdate: function(onConfirm) {
         var msg = gettext("This problem has already been released. Any changes will apply only to future assessments.");
         // TODO: classier confirm dialog
         if (confirm(msg)) { onConfirm(); }
     },
 
     /**
-    Save the updated problem definition to the server.
-    **/
-    updateEditorContext: function () {
+     Save the updated problem definition to the server.
+     **/
+    updateEditorContext: function() {
         // Notify the client-side runtime that we are starting
         // to save so it can show the "Saving..." notification
         this.runtime.notify('save', {state: 'start'});
@@ -198,7 +200,8 @@ OpenAssessment.StudioView.prototype = {
             submissionStart: view.settingsView.submissionStart(),
             submissionDue: view.settingsView.submissionDue(),
             assessments: view.settingsView.assessmentsDescription(),
-            imageSubmissionEnabled: view.settingsView.imageSubmissionEnabled(),
+            fileUploadType: view.settingsView.fileUploadType(),
+            fileTypeWhiteList: view.settingsView.fileTypeWhiteList(),
             latexEnabled: view.settingsView.latexEnabled(),
             leaderboardNum: view.settingsView.leaderboardNum(),
             editorAssessmentsOrder: view.settingsView.editorAssessmentsOrder()
@@ -206,16 +209,16 @@ OpenAssessment.StudioView.prototype = {
             // Notify the client-side runtime that we finished saving
             // so it can hide the "Saving..." notification.
             // Then reload the view.
-            function () { view.runtime.notify('save', {state: 'end'}); }
+            function() { view.runtime.notify('save', {state: 'end'}); }
         ).fail(
-            function (msg) { view.showError(msg); }
+            function(msg) { view.showError(msg); }
         );
     },
 
     /**
-    Cancel editing.
-    **/
-    cancel: function () {
+     Cancel editing.
+     **/
+    cancel: function() {
         // Notify the client-side runtime so it will close the editing modal
         this.saveTabState();
         this.runtime.notify('cancel', {});
@@ -225,19 +228,19 @@ OpenAssessment.StudioView.prototype = {
      Display an error message to the user.
 
      Args:
-        errorMsg (string): The error message to display.
+     errorMsg (string): The error message to display.
      **/
-    showError: function (errorMsg) {
+    showError: function(errorMsg) {
         this.runtime.notify('error', {msg: errorMsg});
     },
 
     /**
-    Mark validation errors.
+     Mark validation errors.
 
-    Returns:
-        Boolean indicating whether the view is valid.
+     Returns:
+     Boolean indicating whether the view is valid.
 
-    **/
+     **/
     validate: function() {
         var settingsValid = this.settingsView.validate();
         var rubricValid = this.rubricView.validate();
@@ -245,14 +248,14 @@ OpenAssessment.StudioView.prototype = {
         return settingsValid && rubricValid && promptsValid;
     },
 
-   /**
-    Return a list of validation errors visible in the UI.
-    Mainly useful for testing.
+    /**
+     Return a list of validation errors visible in the UI.
+     Mainly useful for testing.
 
-    Returns:
-        list of string
+     Returns:
+     list of string
 
-    **/
+     **/
     validationErrors: function() {
         return this.settingsView.validationErrors().concat(
             this.rubricView.validationErrors().concat(
@@ -262,22 +265,22 @@ OpenAssessment.StudioView.prototype = {
     },
 
     /**
-    Clear all validation errors from the UI.
-    **/
+     Clear all validation errors from the UI.
+     **/
     clearValidationErrors: function() {
         this.settingsView.clearValidationErrors();
         this.rubricView.clearValidationErrors();
         this.promptsView.clearValidationErrors();
-    },
+    }
 };
 
-
 /* XBlock entry point for Studio view */
-function OpenAssessmentEditor(runtime, element) {
+/* jshint unused:false */
+function OpenAssessmentEditor(runtime, element, data) {
 
     /**
-    Initialize the editing interface on page load.
-    **/
+     Initialize the editing interface on page load.
+     **/
     var server = new OpenAssessment.Server(runtime, element);
-    var view = new OpenAssessment.StudioView(runtime, element, server);
+    new OpenAssessment.StudioView(runtime, element, server, data);
 }

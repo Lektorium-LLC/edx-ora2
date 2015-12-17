@@ -15,10 +15,6 @@ TEST_APPS = (
 # Configure nose
 NOSE_ARGS = [
     "-a !acceptance",
-    '--with-coverage',
-    '--cover-package=' + ",".join(TEST_APPS),
-    '--cover-branches',
-    '--cover-erase',
     ]
 
 DATABASES = {
@@ -40,10 +36,3 @@ INSTALLED_APPS += ('django_nose',)
 
 # Store uploaded files in a test-specific directory
 MEDIA_ROOT = os.path.join(BASE_DIR, 'storage/test')
-
-
-# Silence cache key warnings
-# https://docs.djangoproject.com/en/1.4/topics/cache/#cache-key-warnings
-import warnings
-from django.core.cache import CacheKeyWarning
-warnings.simplefilter("ignore", CacheKeyWarning)

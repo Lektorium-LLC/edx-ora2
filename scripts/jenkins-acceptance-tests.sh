@@ -29,11 +29,19 @@ if [ -z "$TEST_HOST" ]; then
     exit 1;
 fi
 
-export BASE_URL="https://${BASIC_AUTH_USER}:${BASIC_AUTH_PASSWORD}@${TEST_HOST}"
+export ORA_SANDBOX_URL="https://${BASIC_AUTH_USER}:${BASIC_AUTH_PASSWORD}@${TEST_HOST}"
+EXIT=0
 
+########## Install python requirements #########
 virtualenv venv
 source venv/bin/activate
 pip install -r requirements/test-acceptance.txt
 
-cd test/acceptance
-python tests.py
+######### Run acceptance tests #########
+make test-acceptance || EXIT=1
+
+######### Run accessibility tests #########
+make test-a11y || EXIT=1
+
+######### exit with correct code #########
+exit $EXIT

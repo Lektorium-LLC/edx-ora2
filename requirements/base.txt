@@ -3,28 +3,28 @@
 -r wheels.txt
 
 # edX Internal Requirements
-git+https://github.com/edx/XBlock.git@9c634481dfc85a17dcb3351ca232d7098a38e10e#egg=XBlock
+git+https://github.com/edx/XBlock.git@xblock-0.4.1#egg=XBlock==0.4.1
 
 # edx-submissions
-git+https://github.com/lektorium-llc/edx-submissions.git@19ee7741324a7c728930d882497a8cf66aff7c6a#egg=edx-submissions
+git+https://github.com/edx/edx-submissions.git@0.1.3#egg=edx-submissions==0.1.3
 
 # Third Party Requirements
 boto>=2.32.1,<3.0.0
-celery==3.0.19
+celery==3.1.18
 defusedxml==0.4.1
-django>=1.4,<1.5
-django-celery==3.0.17
-django-extensions==1.2.5
-django-model-utils==1.4.0
-djangorestframework==2.4.2
+django>=1.8,<1.9
+django-extensions==1.5.9
+django-model-utils==2.3.1
+djangorestframework>=3.1,<3.3
 dogapi==1.2.1
+jsonfield==1.0.3
 lazy==1.1
 loremipsum==1.0.5
 python-dateutil==2.1
 python-memcached==1.48
-pytz==2014.10
-South==1.0.1
+pytz==2015.2
 voluptuous==0.8.5
 
 # AI grading
-git+https://github.com/lektorium-llc/ease.git@90c0a6d42f3875b9b5be55d05a6cd8ac9589735f#egg=ease
+git+https://github.com/edx/ease.git@release-2015-07-14#egg=ease==0.1.3
+git+https://github.com/edx/nltk.git@2.0.6#egg=nltk==2.0.6

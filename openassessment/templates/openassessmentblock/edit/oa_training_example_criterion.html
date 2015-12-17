@@ -12,8 +12,7 @@
                     <option value="{{ option.name }}" data-points="{{ option.points }}" data-label="{{ option.label }}"
                                     {% if criterion.option_selected == option.name %} selected {% endif %}
                             >
-                        {{ option.label }} -
-                        {% blocktrans count num_points=option.points %}
+                        {{ option.label }} - {% blocktrans count num_points=option.points trimmed %}
                             {{ num_points }} point
                             {% plural %}
                             {{ num_points }} points

@@ -16,7 +16,6 @@ OpenAssessment.PeerView = function(element, server, baseView) {
     this.rubric = null;
 };
 
-
 OpenAssessment.PeerView.prototype = {
 
     /**
@@ -31,7 +30,7 @@ OpenAssessment.PeerView.prototype = {
                 view.server.renderLatex($('#openassessment__peer-assessment', view.element));
                 view.installHandlers(false);
             }
-        ).fail(function(errMsg) {
+        ).fail(function() {
             view.baseView.showLoadError('peer-assessment');
         });
         // Called to update Messagview with info on whether or not it was able to grab a submission
@@ -55,7 +54,7 @@ OpenAssessment.PeerView.prototype = {
                 view.server.renderLatex($('#openassessment__peer-assessment', view.element));
                 view.installHandlers(true);
             }
-        ).fail(function(errMsg) {
+        ).fail(function() {
             view.baseView.showLoadError('peer-assessment');
             view.continueAssessmentEnabled(true);
         });
@@ -184,7 +183,7 @@ OpenAssessment.PeerView.prototype = {
     Common peer assessment request building, used for all types of peer assessments.
 
     Args:
-        successFunction (function): The function called if the request is
+        successfunction(function): The function called if the request is
             successful. This varies based on the type of request to submit
             a peer assessment.
 
@@ -208,7 +207,5 @@ OpenAssessment.PeerView.prototype = {
             view.baseView.toggleActionError('peer', errMsg);
             view.peerSubmitEnabled(true);
         });
-    },
-
-
+    }
 };
