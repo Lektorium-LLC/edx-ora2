@@ -46,7 +46,8 @@
                     {% trans "Your response to the question above:" as answer_text_label %}
                     {% include "openassessmentblock/oa_submission_answer.html" with answer=self_submission.answer %}
 
-                    {% include "openassessmentblock/oa_uploaded_file.html" with file_upload_type=file_upload_type file_url=self_file_url header="Associated File" class_prefix="self-assessment" %}
+                    {% trans "Associated File" as header %}
+                    {% include "openassessmentblock/oa_uploaded_file.html" with file_upload_type=file_upload_type file_url=self_file_url class_prefix="self-assessment" %}
                 </article>
 
                 <form id="self-assessment--001__assessment" class="self-assessment__assessment" method="post">

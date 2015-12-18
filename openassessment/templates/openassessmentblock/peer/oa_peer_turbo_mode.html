@@ -53,7 +53,8 @@
                             {% trans "Your peer's response to the question above:" as answer_text_label %}
                             {% include "openassessmentblock/oa_submission_answer.html" with answer=peer_submission.answer %}
 
-                            {% include "openassessmentblock/oa_uploaded_file.html" with file_upload_type=file_upload_type file_url=peer_file_url header="Associated File" class_prefix="peer-assessment" show_warning="true" %}
+                            {% trans "Associated File" as header %}
+                            {% include "openassessmentblock/oa_uploaded_file.html" with file_upload_type=file_upload_type file_url=peer_file_url class_prefix="peer-assessment" show_warning="true" %}
                         </div>
 
                         <form id="peer-assessment--001__assessment" class="peer-assessment__assessment" method="post">

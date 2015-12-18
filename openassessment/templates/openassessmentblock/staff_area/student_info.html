@@ -21,7 +21,7 @@
                             Comments: {{ comments }}
                         {% endblocktrans %}
                     {% else %}
-                        {% trans "The student's response to the question above:" as answer_text_label %}
+                        {% trans "The learners's response to the question above:" as answer_text_label %}
                         {% include "openassessmentblock/oa_submission_answer.html" with answer=submission.answer %}
                     {% endif %}
                 </div>

@@ -45,7 +45,8 @@
                 {% trans "Your response to the question above:" as answer_text_label %}
                 {% include "openassessmentblock/oa_submission_answer.html" with answer=student_submission.answer %}
 
-                {% include "openassessmentblock/oa_uploaded_file.html" with file_upload_type=file_upload_type file_url=file_url  header="Your Uploaded File" class_prefix="submission__answer" %}
+                {% trans "Your Uploaded File" as header %}
+                {% include "openassessmentblock/oa_uploaded_file.html" with file_upload_type=file_upload_type file_url=file_url class_prefix="submission__answer" %}
             </article>
         </div>
     </div>
