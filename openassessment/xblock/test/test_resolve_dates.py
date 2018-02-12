@@ -3,13 +3,18 @@ Test resolving unspecified dates and date strings to datetimes.
 """
 
 import datetime
-import pytz
 from django.test import TestCase
 import ddt
+from mock import MagicMock
 from openassessment.xblock.resolve_dates import resolve_dates, DISTANT_PAST, DISTANT_FUTURE
+from openassessment.xblock.user_data import get_user_preferences
+
+import pytz
+from workbench.runtime import WorkBenchUserService
 
 
 STUB_I18N = lambda x: x
+
 
 @ddt.ddt
 class ResolveDatesTest(TestCase):
@@ -127,3 +132,15 @@ class ResolveDatesTest(TestCase):
             ],
             STUB_I18N
         )
+
+    @ddt.data(({}, None, None),
+              ({'pref-lang': 'en', 'time_zone': 'America/Los_Angeles'}, 'America/Los_Angeles', 'en'))
+    @ddt.unpack
+    def test_get_user_preferences(self, user_preferences, expected_timezone, expected_language):
+        """Verify get_user_preferences returns correct time zone and language"""
+        user_service = WorkBenchUserService(3)
+        user_service.get_current_user().opt_attrs['edx-platform.user_preferences'] = user_preferences
+
+        user_preferences = get_user_preferences(user_service)
+        self.assertEqual(expected_timezone, user_preferences['user_timezone'])
+        self.assertEqual(expected_language, user_preferences['user_language'])

@@ -9,6 +9,7 @@ from openassessment.workflow import api as workflow_api
 from openassessment.workflow.errors import AssessmentWorkflowError
 from openassessment.xblock.data_conversion import convert_training_examples_list_to_dict, create_submission_dict
 from .resolve_dates import DISTANT_FUTURE
+from .user_data import get_user_preferences
 
 
 logger = logging.getLogger(__name__)
@@ -69,12 +70,15 @@ class StudentTrainingMixin(object):
         # If no submissions have been created yet, the status will be None.
         workflow_status = self.get_workflow_info().get('status')
         problem_closed, reason, start_date, due_date = self.is_closed(step="student-training")
+        user_preferences = get_user_preferences(self.runtime.service(self, 'user'))
 
-        context = {}
+        context = {"xblock_id": self.get_xblock_id()}
         template = 'openassessmentblock/student_training/student_training_unavailable.html'
 
         # add allow_latex field to the context
         context['allow_latex'] = self.allow_latex
+        context['user_timezone'] = user_preferences['user_timezone']
+        context['user_language'] = user_preferences['user_language']
 
         if not workflow_status:
             return template, context

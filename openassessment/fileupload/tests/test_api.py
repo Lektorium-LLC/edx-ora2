@@ -5,14 +5,18 @@ from boto.s3.key import Key
 import ddt
 
 import json
+from mock import patch, Mock
 import os
 import shutil
 import tempfile
+import urllib
+from urlparse import urlparse
 
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.core.urlresolvers import reverse
+from django.contrib.auth import get_user_model
 
 from moto import mock_s3
 from mock import patch
@@ -23,6 +27,7 @@ from openassessment.fileupload import exceptions
 from openassessment.fileupload import views_filesystem as views
 from openassessment.fileupload.backends.base import Settings as FileUploadSettings
 from openassessment.fileupload.backends.filesystem import get_cache as get_filesystem_cache
+
 
 @ddt.ddt
 class TestFileUploadService(TestCase):
@@ -53,6 +58,23 @@ class TestFileUploadService(TestCase):
         key.set_contents_from_string("How d'ya do?")
         downloadUrl = api.get_download_url("foo")
         self.assertIn("https://mybucket.s3.amazonaws.com/submissions_attachments/foo", downloadUrl)
+
+    @mock_s3
+    @override_settings(
+        AWS_ACCESS_KEY_ID='foobar',
+        AWS_SECRET_ACCESS_KEY='bizbaz',
+        FILE_UPLOAD_STORAGE_BUCKET_NAME="mybucket"
+    )
+    def test_remove_file(self):
+        conn = boto.connect_s3()
+        bucket = conn.create_bucket('mybucket')
+        key = Key(bucket)
+        key.key = "submissions_attachments/foo"
+        key.set_contents_from_string("Test")
+        result = api.remove_file("foo")
+        self.assertTrue(result)
+        result = api.remove_file("foo")
+        self.assertFalse(result)
 
     @raises(exceptions.FileUploadInternalError)
     def test_get_upload_url_no_bucket(self):
@@ -112,7 +134,6 @@ class TestFileUploadServiceWithFilesystemBackend(TestCase):
 
         get_filesystem_cache().clear()
         self.delete_data(self.key_name)
-
 
     def tearDown(self):
         self.delete_data(self.key_name)
@@ -277,3 +298,165 @@ class TestFileUploadServiceWithFilesystemBackend(TestCase):
 
         self.assertEqual(200, upload_response.status_code)
         self.assertEqual(200, download_response.status_code)
+
+    def test_remove_file(self):
+        self.set_key(u"noël.jpg")
+        upload_url = self.backend.get_upload_url(self.key, self.content_type)
+        self.client.put(upload_url, data=self.content.read(), content_type=self.content_type)
+        result = self.backend.remove_file(self.key)
+        self.assertTrue(result)
+        result = self.backend.remove_file(self.key)
+        self.assertFalse(result)
+
+
+@override_settings(
+    ORA2_FILEUPLOAD_BACKEND='swift',
+    ORA2_SWIFT_URL='http://www.example.com:12345',
+    ORA2_SWIFT_KEY='bar',
+    FILE_UPLOAD_STORAGE_BUCKET_NAME='bucket_name'
+)
+class TestSwiftBackend(TestCase):
+    """
+    Test open assessment file upload to swift object storage.
+    """
+    def setUp(self):
+        super(TestSwiftBackend, self).setUp()
+        self.backend = api.backends.get_backend()
+
+    def _verify_url(self, url):
+        result = urlparse(url)
+        self.assertEqual(result.scheme, u'http')
+        self.assertEqual(result.netloc, u'www.example.com:12345')
+        self.assertEqual(result.path, u'/bucket_name/submissions_attachments/foo')
+        self.assertIn(result.params, 'temp_url_sig=')
+        self.assertIn(result.params, 'temp_url_expires=')
+
+    def test_get_backend(self):
+        """
+        Verify that there are no errors setting up swift as a backend.
+        """
+        self.assertTrue(isinstance(self.backend, api.backends.swift.Backend))
+
+    def test_get_upload_url(self):
+        """
+        Verify the upload URL.
+        """
+        url = self.backend.get_upload_url('foo', '_text')
+        self._verify_url(url)
+
+    @patch('openassessment.fileupload.backends.swift.requests.get')
+    def test_get_download_url_success(self, requests_get_mock):
+        """
+        Verify the download URL when the object already exists in storage.
+        """
+        fake_resp = Mock()
+        fake_resp.status_code = 200  # always return a 200 status code
+        requests_get_mock.return_value = fake_resp
+        url = self.backend.get_download_url('foo')
+        self._verify_url(url)
+
+    @patch('openassessment.fileupload.backends.swift.requests.get')
+    def test_get_download_url_no_object(self, requests_get_mock):
+        """
+        Verify the download URL is empty when the object
+        cannot be found in storage.
+        """
+        fake_resp = Mock()
+        fake_resp.status_code = 404  # always return a 404 status code
+        requests_get_mock.return_value = fake_resp
+        url = self.backend.get_download_url('foo')
+        self.assertEqual(url, '')
+
+
+@override_settings(
+    ORA2_FILEUPLOAD_BACKEND="django",
+    DEFAULT_FILE_STORAGE="django.core.files.storage.FileSystemStorage",
+    FILE_UPLOAD_STORAGE_PREFIX="submissions",
+)
+@ddt.ddt
+class TestFileUploadServiceWithDjangoStorageBackend(TestCase):
+    """
+    Test open assessment file upload using django default storage backend.
+
+    For testing purposes, the django filesystem storage class is used.
+    """
+
+    def setUp(self):
+        self.backend = api.backends.get_backend()
+        self.username = 'test_user'
+        self.password = 'password'
+        self.user = get_user_model().objects.create_user(username=self.username, password=self.password)
+
+        self.content = tempfile.TemporaryFile()
+        self.content.write("foobar content")
+        self.content.seek(0)
+
+        self.key = "myfile.txt"
+        self.content_type = "text/plain"
+        self.tearDown()
+
+    def tearDown(self):
+        self.backend.remove_file(self.key)
+
+    def test_get_backend(self):
+        """
+        Ensure the django storage backend is returned when ORA2_FILEUPLOAD_BACKEND="django".
+        """
+        self.assertTrue(isinstance(self.backend, api.backends.django_storage.Backend))
+
+    def test_upload_login_required(self):
+        """
+        Ensure the django file upload endpoint requires authentication.
+        """
+        upload_url = self.backend.get_upload_url(self.key, "bar")
+        response = self.client.put(upload_url, data={"attachment": self.content})
+        self.assertEqual(302, response.status_code)
+
+    @ddt.data(u"noël.txt", "myfile.txt")
+    def test_upload_download(self, key):
+        """
+        Test that uploaded files can be downloaded again.
+        """
+        # Download URL is None until the file is uploaded
+        self.key = key
+        download_url = self.backend.get_download_url(self.key)
+        self.assertIsNone(download_url)
+
+        # Upload file
+        self.client.login(username=self.username, password=self.password)
+        upload_url = self.backend.get_upload_url(self.key, "bar")
+        response = self.client.put(upload_url, data=self.content.read(), content_type=self.content_type)
+        self.assertEqual(200, response.status_code)
+
+        # Check updated download URL
+        download_url = self.backend.get_download_url(self.key)
+        encoded_key = urllib.quote(self.key.encode('utf-8'))
+        self.assertEqual(u"submissions/{}".format(encoded_key), download_url)
+
+    @ddt.data(u"noël.txt", "myfile.txt")
+    def test_remove(self, key):
+        """
+        Test that uploaded files can be removed.
+        """
+        self.key = key
+
+        # Remove file returns False if file does not exist
+        self.assertFalse(self.backend.remove_file(self.key))
+
+        # Upload file
+        self.client.login(username=self.username, password=self.password)
+        upload_url = self.backend.get_upload_url(self.key, "bar")
+        response = self.client.put(upload_url, data=self.content.read(), content_type=self.content_type)
+        self.assertEqual(200, response.status_code)
+
+        # File exists now
+        download_url = self.backend.get_download_url(self.key)
+        encoded_key = urllib.quote(self.key.encode('utf-8'))
+        self.assertEqual(u"submissions/{}".format(encoded_key), download_url)
+
+        # Remove file returns True now, and removes the file
+        self.assertTrue(self.backend.remove_file(self.key))
+
+        # File no longer exists
+        download_url = self.backend.get_download_url(self.key)
+        self.assertIsNone(download_url)

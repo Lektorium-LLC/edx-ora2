@@ -21,7 +21,7 @@ from xblock.fragment import Fragment
 
 from openassessment.xblock.grade_mixin import GradeMixin
 from openassessment.xblock.leaderboard_mixin import LeaderboardMixin
-from openassessment.xblock.defaults import * # pylint: disable=wildcard-import, unused-wildcard-import
+from openassessment.xblock.defaults import *  # pylint: disable=wildcard-import, unused-wildcard-import
 from openassessment.xblock.message_mixin import MessageMixin
 from openassessment.xblock.peer_assessment_mixin import PeerAssessmentMixin
 from openassessment.xblock.lms_mixin import LmsCompatibilityMixin
@@ -31,11 +31,13 @@ from openassessment.xblock.studio_mixin import StudioMixin
 from openassessment.xblock.xml import parse_from_xml, serialize_content_to_xml
 from openassessment.xblock.staff_area_mixin import StaffAreaMixin
 from openassessment.xblock.workflow_mixin import WorkflowMixin
+from openassessment.xblock.staff_assessment_mixin import StaffAssessmentMixin
 from openassessment.workflow.errors import AssessmentWorkflowError
 from openassessment.xblock.student_training_mixin import StudentTrainingMixin
 from openassessment.xblock.validation import validator
-from openassessment.xblock.resolve_dates import resolve_dates, DISTANT_PAST, DISTANT_FUTURE
+from openassessment.xblock.resolve_dates import resolve_dates, parse_date_value, DISTANT_PAST, DISTANT_FUTURE
 from openassessment.xblock.data_conversion import create_prompts_list, create_rubric_dict, update_assessments_format
+from openassessment.xblock.course_items_listing_mixin import CourseItemsListingMixin
 
 
 logger = logging.getLogger(__name__)
@@ -47,38 +49,37 @@ _ = lambda text: text
 UI_MODELS = {
     "submission": {
         "name": "submission",
-        "class_id": "openassessment__response",
-        "navigation_text": "Your response to this assignment",
+        "class_id": "step--response",
         "title": _("Your Response")
     },
     "student-training": {
         "name": "student-training",
-        "class_id": "openassessment__student-training",
-        "navigation_text": "Learn to assess responses",
+        "class_id": "step--student-training",
         "title": _("Learn to Assess")
     },
     "peer-assessment": {
         "name": "peer-assessment",
-        "class_id": "openassessment__peer-assessment",
-        "navigation_text": "Your assessment(s) of peer responses",
+        "class_id": "step--peer-assessment",
         "title": _("Assess Peers' Responses")
     },
     "self-assessment": {
         "name": "self-assessment",
-        "class_id": "openassessment__self-assessment",
-        "navigation_text": "Your assessment of your response",
-        "title": _("Assess Your Response")
+        "class_id": "step--self-assessment",
+        "title": "Assess Your Response"
+    },
+    "staff-assessment": {
+        "name": "staff-assessment",
+        "class_id": "step--staff-assessment",
+        "title": "Staff Grade"
     },
     "grade": {
         "name": "grade",
-        "class_id": "openassessment__grade",
-        "navigation_text": "Your grade for this assignment",
+        "class_id": "step--grade",
         "title": _("Your Grade:")
     },
-     "leaderboard": {
+    "leaderboard": {
         "name": "leaderboard",
-        "class_id": "openassessment__leaderboard",
-        "navigation_text": "A leaderboard of the top submissions",
+        "class_id": "step--leaderboard",
         "title": _("Leaderboard")
     }
 }
@@ -88,6 +89,7 @@ VALID_ASSESSMENT_TYPES = [
     "example-based-assessment",
     "peer-assessment",
     "self-assessment",
+    "staff-assessment"
 ]
 
 
@@ -96,23 +98,26 @@ def load(path):
     data = pkg_resources.resource_string(__name__, path)
     return data.decode("utf8")
 
+
 @XBlock.needs("i18n")
 @XBlock.needs("user")
-class OpenAssessmentBlock(
-    MessageMixin,
-    SubmissionMixin,
-    PeerAssessmentMixin,
-    SelfAssessmentMixin,
-    StudioMixin,
-    GradeMixin,
-    LeaderboardMixin,
-    StaffAreaMixin,
-    WorkflowMixin,
-    StudentTrainingMixin,
-    LmsCompatibilityMixin,
-    XBlock,
-):
+class OpenAssessmentBlock(MessageMixin,
+                          SubmissionMixin,
+                          PeerAssessmentMixin,
+                          SelfAssessmentMixin,
+                          StaffAssessmentMixin,
+                          StudioMixin,
+                          GradeMixin,
+                          LeaderboardMixin,
+                          StaffAreaMixin,
+                          WorkflowMixin,
+                          StudentTrainingMixin,
+                          LmsCompatibilityMixin,
+                          CourseItemsListingMixin,
+                          XBlock):
     """Displays a prompt and provides an area where students can compose a response."""
+
+    public_dir = 'static'
 
     submission_start = String(
         default=DEFAULT_START, scope=Scope.settings,
@@ -122,6 +127,18 @@ class OpenAssessmentBlock(
     submission_due = String(
         default=DEFAULT_DUE, scope=Scope.settings,
         help="ISO-8601 formatted string representing the submission due date."
+    )
+
+    text_response_raw = String(
+        help="Specify whether learners must include a text based response to this problem's prompt.",
+        default="required",
+        scope=Scope.settings
+    )
+
+    file_upload_response_raw = String(
+        help="Specify whether learners are able to upload files as a part of their response.",
+        default=None,
+        scope=Scope.settings
     )
 
     allow_file_upload = Boolean(
@@ -149,7 +166,7 @@ class OpenAssessmentBlock(
     )
 
     title = String(
-        default="",
+        default="Open Response Assessment",
         scope=Scope.content,
         help="A title to display to a student (plain text)."
     )
@@ -214,6 +231,12 @@ class OpenAssessmentBlock(
         help="Saved response submission for the current user."
     )
 
+    saved_files_descriptions = String(
+        default=u"",
+        scope=Scope.user_state,
+        help="Saved descriptions for each uploaded file."
+    )
+
     no_peers = Boolean(
         default=False,
         scope=Scope.user_state,
@@ -223,6 +246,42 @@ class OpenAssessmentBlock(
     @property
     def course_id(self):
         return self._serialize_opaque_key(self.xmodule_runtime.course_id)  # pylint:disable=E1101
+
+    @property
+    def text_response(self):
+        """
+        Backward compatibility for existing blocks that were created without text_response
+        or file_upload_response fields. These blocks will be treated as required text.
+        """
+        if not self.file_upload_response and not self.text_response_raw:
+            return 'required'
+        else:
+            return self.text_response_raw
+
+    @text_response.setter
+    def text_response(self, value):
+        """
+        Setter for text_response_raw
+        """
+        self.text_response_raw = value if value else None
+
+    @property
+    def file_upload_response(self):
+        """
+        Backward compatibility for existing block before that were created without
+        'text_response' and 'file_upload_response_raw' fields.
+        """
+        if not self.file_upload_response_raw and (self.file_upload_type_raw is not None or self.allow_file_upload):
+            return 'optional'
+        else:
+            return self.file_upload_response_raw
+
+    @file_upload_response.setter
+    def file_upload_response(self, value):
+        """
+        Setter for file_upload_response_raw
+        """
+        self.file_upload_response_raw = value if value else None
 
     @property
     def file_upload_type(self):
@@ -359,8 +418,89 @@ class OpenAssessmentBlock(
             "show_staff_area": self.is_course_staff and not self.in_studio_preview,
         }
         template = get_template("openassessmentblock/oa_base.html")
+
+        return self._create_fragment(template, context_dict, initialize_js_func='OpenAssessmentBlock')
+
+    def ora_blocks_listing_view(self, context=None):
+        """This view is used in the Open Response Assessment tab in the LMS Instructor Dashboard
+        to display all available course ORA blocks.
+
+        Args:
+            context: contains two items:
+                "ora_items" - all course items with names and parents, example:
+                    [{"parent_name": "Vertical name",
+                      "name": "ORA Display Name",
+                      "url_grade_available_responses": "/grade_available_responses_view",
+                      "staff_assessment": false,
+                      "parent_id": "vertical_block_id",
+                      "url_base": "/student_view",
+                      "id": "openassessment_block_id"
+                     }, ...]
+                "ora_item_view_enabled" - enabled LMS API endpoint to serve XBlock view or not
+
+        Returns:
+            (Fragment): The HTML Fragment for this XBlock.
+        """
+        ora_items = context.get('ora_items', []) if context else []
+        ora_item_view_enabled = context.get('ora_item_view_enabled', False) if context else False
+        context_dict = {
+            "ora_items": json.dumps(ora_items),
+            "ora_item_view_enabled": ora_item_view_enabled
+        }
+
+        template = get_template('openassessmentblock/instructor_dashboard/oa_listing.html')
+
+        min_postfix = '.min' if settings.DEBUG else ''
+
+        return self._create_fragment(
+            template,
+            context_dict,
+            initialize_js_func='CourseOpenResponsesListingBlock',
+            additional_css=["static/css/lib/backgrid/backgrid%s.css" % min_postfix],
+            additional_js=["static/js/lib/backgrid/backgrid%s.js" % min_postfix]
+        )
+
+    def grade_available_responses_view(self, context=None):
+        """Grade Available Responses view.
+
+        Auxiliary view which displays the staff grading area
+        (used in the Open Response Assessment tab in the Instructor Dashboard of LMS)
+
+        Args:
+            context: Not used for this view.
+
+        Returns:
+            (Fragment): The HTML Fragment for this XBlock.
+        """
+        student_item = self.get_student_item_dict()
+        staff_assessment_required = "staff-assessment" in self.assessment_steps
+
+        context_dict = {
+            "title": self.title,
+            'staff_assessment_required': staff_assessment_required
+        }
+
+        if staff_assessment_required:
+            context_dict.update(
+                self.get_staff_assessment_statistics_context(student_item["course_id"], student_item["item_id"])
+            )
+
+        template = get_template('openassessmentblock/instructor_dashboard/oa_grade_available_responses.html')
+
+        return self._create_fragment(template, context_dict, initialize_js_func='StaffAssessmentBlock')
+
+    def _create_fragment(self, template, context_dict, initialize_js_func, additional_css=None, additional_js=None):
+        """
+        Creates a fragment for display.
+
+        """
         context = Context(context_dict)
         fragment = Fragment(template.render(context))
+
+        if additional_css is None:
+            additional_css = []
+        if additional_js is None:
+            additional_js = []
 
         i18n_service = self.runtime.service(self, 'i18n')
         if hasattr(i18n_service, 'get_language_bidi') and i18n_service.get_language_bidi():
@@ -369,13 +509,22 @@ class OpenAssessmentBlock(
             css_url = "static/css/openassessment-ltr.css"
 
         if settings.DEBUG:
+            for css in additional_css:
+                fragment.add_css_url(self.runtime.local_resource_url(self, css))
             fragment.add_css_url(self.runtime.local_resource_url(self, css_url))
+
+            for js in additional_js:
+                self.add_javascript_files(fragment, js)
             self.add_javascript_files(fragment, "static/js/src/oa_shared.js")
             self.add_javascript_files(fragment, "static/js/src/oa_server.js")
             self.add_javascript_files(fragment, "static/js/src/lms")
         else:
             # TODO: load CSS and JavaScript as URLs once they can be served by the CDN
+            for css in additional_css:
+                fragment.add_css(load(css))
             fragment.add_css(load(css_url))
+
+            # minified additional_js should be already included in 'make javascript'
             fragment.add_javascript(load("static/js/openassessment-lms.min.js"))
         js_context_dict = {
             "ALLOWED_IMAGE_MIME_TYPES": self.ALLOWED_IMAGE_MIME_TYPES,
@@ -383,7 +532,7 @@ class OpenAssessmentBlock(
             "FILE_EXT_BLACK_LIST": self.FILE_EXT_BLACK_LIST,
             "FILE_TYPE_WHITE_LIST": self.white_listed_file_types,
         }
-        fragment.initialize_js('OpenAssessmentBlock', js_context_dict)
+        fragment.initialize_js(initialize_js_func, js_context_dict)
         return fragment
 
     @property
@@ -449,10 +598,20 @@ class OpenAssessmentBlock(
 
         """
         ui_models = [UI_MODELS["submission"]]
+        staff_assessment_required = False
         for assessment in self.valid_assessments:
+            if assessment["name"] == "staff-assessment":
+                if not assessment["required"]:
+                    continue
+                else:
+                    staff_assessment_required = True
             ui_model = UI_MODELS.get(assessment["name"])
             if ui_model:
                 ui_models.append(dict(assessment, **ui_model))
+
+        if not staff_assessment_required and self.staff_assessment_exists(self.submission_uuid):
+            ui_models.append(UI_MODELS["staff-assessment"])
+
         ui_models.append(UI_MODELS["grade"])
 
         if self.leaderboard_show > 0:
@@ -550,6 +709,8 @@ class OpenAssessmentBlock(
         block.submission_due = config['submission_due']
         block.title = config['title']
         block.prompts = config['prompts']
+        block.text_response = config['text_response']
+        block.file_upload_response = config['file_upload_response']
         block.allow_file_upload = config['allow_file_upload']
         block.file_upload_type = config['file_upload_type']
         block.white_listed_file_types_string = config['white_listed_file_types']
@@ -626,6 +787,7 @@ class OpenAssessmentBlock(
             "example-based-assessment": self._("Example-based Assessment"),
             "peer-assessment": self._("Peer Assessment"),
             "self-assessment": self._("Self Assessment"),
+            "staff-assessment": self._("Staff Grade")
         }
         return step_verbose_names.get(step, step)
 
@@ -730,11 +892,14 @@ class OpenAssessmentBlock(
 
         Examples:
             >>> is_closed()
-            False, None, datetime.datetime(2014, 3, 27, 22, 7, 38, 788861), datetime.datetime(2015, 3, 27, 22, 7, 38, 788861)
+            False, None, datetime.datetime(2014, 3, 27, 22, 7, 38, 788861),
+            datetime.datetime(2015, 3, 27, 22, 7, 38, 788861)
             >>> is_closed(step="submission")
-            True, "due", datetime.datetime(2014, 3, 27, 22, 7, 38, 788861), datetime.datetime(2015, 3, 27, 22, 7, 38, 788861)
+            True, "due", datetime.datetime(2014, 3, 27, 22, 7, 38, 788861),
+            datetime.datetime(2015, 3, 27, 22, 7, 38, 788861)
             >>> is_closed(step="self-assessment")
-            True, "start", datetime.datetime(2014, 3, 27, 22, 7, 38, 788861), datetime.datetime(2015, 3, 27, 22, 7, 38, 788861)
+            True, "start", datetime.datetime(2014, 3, 27, 22, 7, 38, 788861),
+            datetime.datetime(2015, 3, 27, 22, 7, 38, 788861)
 
         """
         submission_range = (self.submission_start, self.submission_due)
@@ -778,22 +943,17 @@ class OpenAssessmentBlock(
 
     def get_waiting_details(self, status_details):
         """
-        Returns the specific waiting status based on the given status_details.
-        This status can currently be peer, example-based, or both. This is
-        determined by checking that status details to see if all assessment
-        modules have been graded.
+        Returns waiting status (boolean value) based on the given status_details.
 
         Args:
             status_details (dict): A dictionary containing the details of each
                 assessment module status. This will contain keys such as
-                "peer" and "ai", referring to dictionaries, which in turn will
-                have the key "graded". If this key has a value set, these
-                assessment modules have been graded.
+                "peer", "ai", and "staff", referring to dictionaries, which in
+                turn will have the key "graded". If this key has a value set,
+                these assessment modules have been graded.
 
         Returns:
-            A string of "peer", "exampled-based", or "all" to indicate which
-            assessment modules in the workflow are waiting on assessments.
-            Returns None if no module is waiting on an assessment.
+            True if waiting for a grade from peer, ai, or staff assessment, else False.
 
         Examples:
             >>> now = dt.datetime.utcnow().replace(tzinfo=pytz.utc)
@@ -808,18 +968,13 @@ class OpenAssessmentBlock(
             >>>     }
             >>> }
             >>> self.get_waiting_details(status_details)
-            "peer"
+            True
         """
-        waiting = None
-        peer_waiting = "peer" in status_details and not status_details["peer"]["graded"]
-        ai_waiting = "ai" in status_details and not status_details["ai"]["graded"]
-        if peer_waiting and ai_waiting:
-            waiting = "all"
-        elif peer_waiting:
-            waiting = "peer"
-        elif ai_waiting:
-            waiting = "example-based"
-        return waiting
+        steps = ["peer", "ai", "staff"]  # These are the steps that can be submitter-complete, but lack a grade
+        for step in steps:
+            if step in status_details and not status_details[step]["graded"]:
+                return True
+        return False
 
     def is_released(self, step=None):
         """
@@ -841,7 +996,10 @@ class OpenAssessmentBlock(
         else:
             is_published = True
         is_closed, reason, __, __ = self.is_closed(step=step)
-        return is_published and (not is_closed or reason == 'due')
+        is_released = is_published and (not is_closed or reason == 'due')
+        if self.start:
+            is_released = is_released and dt.datetime.now(pytz.UTC) > parse_date_value(self.start, self._)
+        return is_released
 
     def get_assessment_module(self, mixin_name):
         """
@@ -867,7 +1025,7 @@ class OpenAssessmentBlock(
             if assessment["name"] == mixin_name:
                 return assessment
 
-    def publish_assessment_event(self, event_name, assessment):
+    def publish_assessment_event(self, event_name, assessment, **kwargs):
         """
         Emit an analytics event for the peer assessment.
 
@@ -903,20 +1061,45 @@ class OpenAssessmentBlock(
                 "feedback": part["feedback"]
             })
 
+        event_data = {
+            "feedback": assessment["feedback"],
+            "rubric": {
+                "content_hash": assessment["rubric"]["content_hash"],
+            },
+            "scorer_id": assessment["scorer_id"],
+            "score_type": assessment["score_type"],
+            "scored_at": assessment["scored_at"],
+            "submission_uuid": assessment["submission_uuid"],
+            "parts": parts_list
+        }
+
+        for key in kwargs:
+            event_data[key] = kwargs[key]
+
         self.runtime.publish(
             self, event_name,
-            {
-                "feedback": assessment["feedback"],
-                "rubric": {
-                    "content_hash": assessment["rubric"]["content_hash"],
-                },
-                "scorer_id": assessment["scorer_id"],
-                "score_type": assessment["score_type"],
-                "scored_at": assessment["scored_at"],
-                "submission_uuid": assessment["submission_uuid"],
-                "parts": parts_list
-            }
+            event_data
         )
+
+    @XBlock.json_handler
+    def publish_event(self, data, suffix=''):
+        """
+        Publish the given data to an event.
+
+        Expects key 'event_name' to be present in the data dictionary.
+        """
+
+        try:
+            event_name = data['event_name']
+        except KeyError:
+            logger.exception("Could not find the name of the event to be triggered.")
+            return {'success': False}
+
+        # Remove the name so we don't publish as part of the data.
+        del data['event_name']
+
+        self.runtime.publish(self, event_name, data)
+        return {'success': True}
 
     def _serialize_opaque_key(self, key):
         """
@@ -939,8 +1122,24 @@ class OpenAssessmentBlock(
             return unicode(key)
 
     def get_username(self, anonymous_user_id):
+        """
+        Return the username of the user associated with anonymous_user_id
+        Args:
+            anonymous_user_id (str): the anonymous user id of the user
+
+        Returns: the username if it can be identified. If the xblock service to converts to a real user
+            fails, returns None and logs the error.
+
+        """
         if hasattr(self, "xmodule_runtime"):
-            return self.xmodule_runtime.get_real_user(anonymous_user_id).username
+            user = self.xmodule_runtime.get_real_user(anonymous_user_id)
+            if user:
+                return user.username
+            else:
+                logger.exception(
+                    "XBlock service could not find user for anonymous_user_id '{}'".format(anonymous_user_id)
+                )
+                return None
 
     def _adjust_start_date_for_beta_testers(self, start):
         if hasattr(self, "xmodule_runtime"):
@@ -952,3 +1151,8 @@ class OpenAssessmentBlock(
 
         return start
 
+    def get_xblock_id(self):
+        """
+        Returns the xblock id
+        """
+        return self._serialize_opaque_key(self.scope_ids.usage_id)

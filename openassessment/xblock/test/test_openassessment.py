@@ -1,19 +1,28 @@
 """
 Tests the Open Assessment XBlock functionality.
 """
+import ddt
+import json
+
 from collections import namedtuple
 import datetime as dt
+from freezegun import freeze_time
 import pytz
 from mock import Mock, patch, MagicMock, PropertyMock
+from lxml import etree
+from StringIO import StringIO
 
 from openassessment.xblock import openassessmentblock
 from openassessment.xblock.resolve_dates import DISTANT_PAST, DISTANT_FUTURE
-from openassessment.workflow import api as workflow_api
 from openassessment.workflow.errors import AssessmentWorkflowError
 from .base import XBlockHandlerTestCase, scenario
 
 
+@ddt.ddt
 class TestOpenAssessment(XBlockHandlerTestCase):
+    """Test Open Asessessment Xblock functionality"""
+
+    TIME_ZONE_FN_PATH = 'openassessment.xblock.user_data.get_user_preferences'
 
     @scenario('data/basic_scenario.xml')
     def test_load_student_view(self, xblock):
@@ -24,36 +33,120 @@ class TestOpenAssessment(XBlockHandlerTestCase):
         contents.
         """
         xblock_fragment = self.runtime.render(xblock, "student_view")
-        self.assertTrue(xblock_fragment.body_html().find("Openassessmentblock"))
+        self.assertIn("OpenAssessmentBlock", xblock_fragment.body_html())
 
         # Validate Submission Rendering.
         submission_response = xblock.render_submission({})
         self.assertIsNotNone(submission_response)
-        self.assertTrue(submission_response.body.find("openassessment__response"))
+        self.assertIn("step--response", submission_response.body)
 
         # Validate Peer Rendering.
         request = namedtuple('Request', 'params')
         request.params = {}
         peer_response = xblock.render_peer_assessment(request)
         self.assertIsNotNone(peer_response)
-        self.assertTrue(peer_response.body.find("openassessment__peer-assessment"))
+        self.assertIn("step--peer-assessment", peer_response.body)
 
         # Validate Self Rendering.
         self_response = xblock.render_self_assessment(request)
         self.assertIsNotNone(self_response)
-        self.assertTrue(self_response.body.find("openassessment__peer-assessment"))
+        self.assertIn("step--self-assessment", self_response.body)
+
+        # Validate Staff Grade.
+        staff_response = xblock.render_staff_assessment(request)
+        self.assertIsNotNone(self_response)
+        self.assertIn("step--staff-assessment", staff_response.body)
 
         # Validate Grading.
         grade_response = xblock.render_grade({})
         self.assertIsNotNone(grade_response)
-        self.assertTrue(grade_response.body.find("openassessment__grade"))
+        self.assertIn("step--grade", grade_response.body)
+
+    def _staff_assessment_view_helper(self, xblock):
+        """
+        Helper for "staff_assessment_view" tests
+
+        """
+        xblock_fragment = self.runtime.render(xblock, "grade_available_responses_view")
+        body_html = xblock_fragment.body_html()
+        self.assertIn("StaffAssessmentBlock", body_html)
+        self.assertIn("openassessment__title", body_html)
+        return body_html
+
+    @scenario('data/staff_grade_scenario.xml')
+    def test_staff_assessment_view(self, xblock):
+        """OA XBlock returns some HTML for case if Staff Assessment is configured.
+
+        View basic test for verifying auxiliary view which displays the staff grading area.
+        """
+        body_html = self._staff_assessment_view_helper(xblock)
+        self.assertIn("openassessment__staff-area", body_html)
+        self.assertIn("ui-staff__content", body_html)
+        self.assertNotIn("openassessment__staff-area-unavailable", body_html)
+
+    @scenario('data/basic_scenario.xml')
+    def test_staff_assessment_view_staff_assessment_not_configured(self, xblock):
+        """OA XBlock returns some HTML for case if Staff Assessment is not configured.
+
+        View basic test for verifying auxiliary view which displays the staff grading area.
+        """
+        body_html = self._staff_assessment_view_helper(xblock)
+        self.assertNotIn("ui-staff__content", body_html)
+        self.assertIn("openassessment__staff-area-unavailable", body_html)
+
+    @scenario('data/basic_scenario.xml')
+    def test_ora_blocks_listing_view(self, xblock):
+        """
+        Test view for listing all courses OA blocks.
+
+        """
+        xblock_fragment = self.runtime.render(xblock, "ora_blocks_listing_view")
+        body_html = xblock_fragment.body_html()
+
+        self.assertIn("CourseOpenResponsesListingBlock", body_html)
+
+        parser = etree.HTMLParser()
+        tree = etree.parse(StringIO(body_html), parser)
+
+        xpath_query_to_get_main_section = "//section[contains(@class, 'open-response-assessment-block')]"
+        xpath_query_to_get_course_items = "//script[contains(@id, 'open-response-assessment-items')]"
+
+        sections = tree.xpath(xpath_query_to_get_main_section)
+        self.assertEqual(len(sections), 1)
+        self.assertEquals(sections[0].get('data-item-view-enabled'), '0')
+
+        scripts = tree.xpath(xpath_query_to_get_course_items)
+        self.assertEqual(len(scripts), 1)
+        self.assertEqual(scripts[0].text, '[]')
+
+        defined_ora_items = [{'id': 'test-id1', 'val': 'test-val1'},
+                             {'id': 'test-id2', 'val': 'test-val2'}]
+
+        xblock_fragment = self.runtime.render(xblock, "ora_blocks_listing_view", context={
+            'ora_items': defined_ora_items,
+            'ora_item_view_enabled': True
+        })
+        body_html = xblock_fragment.body_html()
+
+        parser = etree.HTMLParser()
+        tree = etree.parse(StringIO(body_html), parser)
+
+        sections = tree.xpath(xpath_query_to_get_main_section)
+        self.assertEqual(len(sections), 1)
+        self.assertEquals(sections[0].get('data-item-view-enabled'), '1')
+
+        scripts = tree.xpath(xpath_query_to_get_course_items)
+        self.assertEqual(len(scripts), 1)
+
+        items = json.loads(scripts[0].text)
+        self.assertEqual(items, defined_ora_items)
 
     @scenario('data/empty_prompt.xml')
     def test_prompt_intentionally_empty(self, xblock):
         # Verify that prompts intentionally left empty don't create DOM elements
         xblock_fragment = self.runtime.render(xblock, "student_view")
         body_html = xblock_fragment.body_html()
-        present_prompt_text = "you'll provide a response to the question"
+        present_prompt_text = "you'll provide a response to the prompt"
         missing_article = u'<article class="submission__answer__part__prompt'
         self.assertIn(present_prompt_text, body_html)
         self.assertNotIn(missing_article, body_html)
@@ -73,7 +166,7 @@ class TestOpenAssessment(XBlockHandlerTestCase):
         with patch('openassessment.xblock.workflow_mixin.workflow_api') as mock_api:
             self.runtime.render(xblock, "student_view")
             expected_reqs = {
-                "peer": { "must_grade": 5, "must_be_graded_by": 3 }
+                "peer": {"must_grade": 5, "must_be_graded_by": 3}
             }
             mock_api.update_from_assessments.assert_called_once_with('test_submission', expected_reqs)
 
@@ -87,95 +180,199 @@ class TestOpenAssessment(XBlockHandlerTestCase):
             xblock_fragment = self.runtime.render(xblock, "student_view")
 
         # Expect that the page renders even if the update fails
-        self.assertTrue(xblock_fragment.body_html().find("Openassessmentblock"))
+        self.assertIn("OpenAssessmentBlock", xblock_fragment.body_html())
 
-    @scenario('data/dates_scenario.xml')
-    def test_load_student_view_with_dates(self, xblock):
+    @ddt.data(('utc', '2014-04-01T00:00:00+00:00'),
+              ('America/Los_Angeles', '2014-04-01T00:00:00+00:00'))
+    @ddt.unpack
+    def test_load_student_view_with_dates(self, time_zone, expected_date):
         """OA XBlock returns some HTML to the user.
 
         View basic test for verifying we're returned some HTML about the
         Open Assessment XBlock. We don't want to match too heavily against the
         contents.
         """
-        xblock_fragment = self.runtime.render(xblock, "student_view")
-        self.assertTrue(xblock_fragment.body_html().find("Openassessmentblock"))
+        with patch('openassessment.xblock.user_data.get_user_preferences') as time_zone_fn:
+            time_zone_fn.return_value['user_timezone'] = pytz.timezone(time_zone)
 
-        # Validate Submission Rendering.
-        submission_response = xblock.render_submission({})
-        self.assertIsNotNone(submission_response)
-        self.assertTrue(submission_response.body.find("openassessment__response"))
-        self.assertTrue(submission_response.body.find("April"))
+            xblock = self.load_scenario('data/dates_scenario.xml')
+            xblock_fragment = self.runtime.render(xblock, "student_view")
+            self.assertIn("OpenAssessmentBlock", xblock_fragment.body_html())
 
-    @scenario('data/basic_scenario.xml')
-    def test_formatted_dates(self, xblock):
+            # Validate Submission Rendering.
+            submission_response = xblock.render_submission({})
+            self.assertIsNotNone(submission_response)
+            self.assertIn("step--response", submission_response.body)
+            self.assertIn(expected_date, submission_response.body)
 
-        # Set start/due dates
-        xblock.start = dt.datetime(2014, 4, 1, 1, 1, 1)
-        xblock.due = dt.datetime(2014, 5, 1)
+    def _set_up_start_date(self, start_date):
+        """
+        Helper function to set up start date for xblocks
+        """
+        xblock = self.load_scenario('data/basic_scenario.xml')
+        xblock.start = start_date
+        return xblock
 
-        request = namedtuple('Request', 'params')
-        request.params = {}
-        resp = xblock.render_peer_assessment(request)
-        self.assertTrue(resp.body.find('Tuesday, April 01, 2014'))
-        self.assertTrue(resp.body.find('Thursday, May 01, 2014'))
-
-    @scenario('data/basic_scenario.xml')
-    def test_formatted_dates_for_beta_tester_with_days_early(self, xblock):
-        """Test dates for beta tester with days early"""
-
-        # Set start/due dates
-        xblock.start = dt.datetime(2014, 4, 6, 1, 1, 1)
-        xblock.due = dt.datetime(2014, 5, 1)
+    def _set_up_days_early_for_beta(self, xblock, days_early):
+        """
+        Helper function to set up start date early for beta testers
+        """
         xblock.xmodule_runtime = Mock(
             course_id='test_course',
             anonymous_student_id='test_student',
-            days_early_for_beta=5,
+            days_early_for_beta=days_early,
             user_is_staff=False,
             user_is_beta_tester=True
         )
-        self.assertEqual(xblock.xmodule_runtime.days_early_for_beta, 5)
+
+    def _set_up_end_date(self, end_date):
+        """
+        Helper function to set up end date for xblocks
+        """
+        xblock = self.load_scenario('data/basic_scenario.xml')
+        xblock.due = end_date
+        return xblock
+
+    def _render_xblock(self, xblock):
+        """
+        Helper function to render xblock
+        """
         request = namedtuple('Request', 'params')
         request.params = {}
-        resp = xblock.render_peer_assessment(request)
-        self.assertTrue(resp.body.find('Tuesday, April 01, 2014'))
-        self.assertTrue(resp.body.find('Thursday, May 01, 2014'))
+        return xblock.render_peer_assessment(request)
 
+    @ddt.data(('utc', '2014-04-01T01:01:01+00:00'),
+              ('America/Los_Angeles', '2014-04-01T01:01:01+00:00'))
+    @ddt.unpack
+    @freeze_time("2014-01-01")
+    def test_formatted_start_dates(self, time_zone, expected_start_date):
+        """Test start dates correctly formatted"""
+        with patch(self.TIME_ZONE_FN_PATH) as time_zone_fn:
+            time_zone_fn.return_value['user_timezone'] = pytz.timezone(time_zone)
+
+            xblock = self._set_up_start_date(dt.datetime(2014, 4, 1, 1, 1, 1))
+            resp = self._render_xblock(xblock)
+            self.assertIn(expected_start_date, resp.body)
+
+    @ddt.data(('utc', '2014-05-01T00:00:00+00:00'),
+              ('America/Los_Angeles', '2014-05-01T00:00:00+00:00'))
+    @ddt.unpack
+    def test_formatted_end_dates(self, time_zone, expected_end_date):
+        """Test end dates correctly formatted"""
+        with patch(self.TIME_ZONE_FN_PATH) as time_zone_fn:
+            time_zone_fn.return_value['user_timezone'] = time_zone
+
+            # Set due dates'
+            xblock = self._set_up_end_date(dt.datetime(2014, 5, 1))
+            resp = self._render_xblock(xblock)
+            self.assertIn(expected_end_date, resp.body)
+
+    @ddt.data(('utc', '2014-04-01T01:01:01+00:00'),
+              ('America/Los_Angeles', '2014-04-01T01:01:01+00:00'))
+    @ddt.unpack
+    @freeze_time("2014-01-01")
+    def test_formatted_start_dates_for_beta_tester_with_days_early(self, time_zone, expected_start_date):
+        """Test start dates for beta tester with days early"""
+        with patch(self.TIME_ZONE_FN_PATH) as time_zone_fn:
+            time_zone_fn.return_value['user_timezone'] = pytz.timezone(time_zone)
+
+            # Set start dates
+            xblock = self._set_up_start_date(dt.datetime(2014, 4, 6, 1, 1, 1))
+            self._set_up_days_early_for_beta(xblock, 5)
+            self.assertEqual(xblock.xmodule_runtime.days_early_for_beta, 5)
+
+            resp = self._render_xblock(xblock)
+            self.assertIn(expected_start_date, resp.body)
+
+    @ddt.data(('utc', '2014-05-01T00:00:00+00:00'),
+              ('America/Los_Angeles', '2014-05-01T00:00:00+00:00'))
+    @ddt.unpack
+    def test_formatted_end_dates_for_beta_tester_with_days_early(self, time_zone, expected_end_date):
+        """Test end dates for beta tester with days early"""
+        with patch(self.TIME_ZONE_FN_PATH) as time_zone_fn:
+            time_zone_fn.return_value['user_timezone'] = pytz.timezone(time_zone)
+
+            # Set due dates
+            xblock = self._set_up_start_date(dt.datetime(2014, 4, 6, 1, 1, 1))
+            xblock.due = dt.datetime(2014, 5, 1)
+            self._set_up_days_early_for_beta(xblock, 5)
+            self.assertEqual(xblock.xmodule_runtime.days_early_for_beta, 5)
+            resp = self._render_xblock(xblock)
+            self.assertIn(expected_end_date, resp.body)
+
+    @ddt.data(('utc', '2014-04-06T01:01:01+00:00'),
+              ('America/Los_Angeles', '2014-04-06T01:01:01+00:00'))
+    @ddt.unpack
+    @freeze_time("2014-01-01")
     @patch.object(openassessmentblock.OpenAssessmentBlock, 'is_beta_tester', new_callable=PropertyMock)
-    @scenario('data/basic_scenario.xml')
-    def test_formatted_dates_for_beta_tester_without_days_early(self, xblock, mock_is_beta_tester):
-        """Test dates for beta tester without days early"""
+    def test_formatted_start_dates_for_beta_tester_without_days_early(
+            self,
+            time_zone,
+            expected_start_date,
+            mock_is_beta_tester
+    ):
+        """Test start dates for beta tester without days early"""
+        with patch(self.TIME_ZONE_FN_PATH) as time_zone_fn:
+            time_zone_fn.return_value['user_timezone'] = pytz.timezone(time_zone)
+            mock_is_beta_tester.return_value = True
 
-        mock_is_beta_tester.return_value = True
+            # Set start dates
+            xblock = self._set_up_start_date(dt.datetime(2014, 4, 6, 1, 1, 1))
+            resp = self._render_xblock(xblock)
+            self.assertIn(expected_start_date, resp.body)
 
-        # Set start/due dates
-        xblock.start = dt.datetime(2014, 4, 6, 1, 1, 1)
-        xblock.due = dt.datetime(2014, 5, 1)
-        request = namedtuple('Request', 'params')
-        request.params = {}
-        resp = xblock.render_peer_assessment(request)
-        self.assertTrue(resp.body.find('Tuesday, April 06, 2014'))
-        self.assertTrue(resp.body.find('Thursday, May 01, 2014'))
+    @ddt.data(('utc', '2014-05-01T00:00:00+00:00'),
+              ('America/Los_Angeles', '2014-05-01T00:00:00+00:00'))
+    @ddt.unpack
+    @patch.object(openassessmentblock.OpenAssessmentBlock, 'is_beta_tester', new_callable=PropertyMock)
+    def test_formatted_end_dates_for_beta_tester_without_days_early(
+            self,
+            time_zone,
+            expected_end_date,
+            mock_is_beta_tester
+    ):
+        """Test end dates for beta tester without days early"""
+        with patch(self.TIME_ZONE_FN_PATH) as time_zone_fn:
+            time_zone_fn.return_value['user_timezone'] = pytz.timezone(time_zone)
+            mock_is_beta_tester.return_value = True
 
-    @scenario('data/basic_scenario.xml')
-    def test_formatted_dates_for_beta_tester_with_nonetype_days_early(self, xblock):
-        """Test dates for beta tester with NoneType days early"""
+            # Set due dates
+            xblock = self._set_up_end_date(dt.datetime(2014, 5, 1))
+            resp = self._render_xblock(xblock)
+            self.assertIn(expected_end_date, resp.body)
 
-        # Set start/due dates
-        xblock.start = dt.datetime(2014, 4, 6, 1, 1, 1)
-        xblock.due = dt.datetime(2014, 5, 1)
-        xblock.xmodule_runtime = Mock(
-            course_id='test_course',
-            anonymous_student_id='test_student',
-            days_early_for_beta=None,
-            user_is_staff=False,
-            user_is_beta_tester=True
-        )
-        self.assertEqual(xblock.xmodule_runtime.days_early_for_beta, None)
-        request = namedtuple('Request', 'params')
-        request.params = {}
-        resp = xblock.render_peer_assessment(request)
-        self.assertTrue(resp.body.find('Tuesday, April 06, 2014'))
-        self.assertTrue(resp.body.find('Thursday, May 01, 2014'))
+    @ddt.data(('utc', '2014-04-06T01:01:01+00:00'),
+              ('America/Los_Angeles', '2014-04-06T01:01:01+00:00'))
+    @ddt.unpack
+    @freeze_time("2014-01-01")
+    def test_formatted_start_dates_for_beta_tester_with_nonetype_days_early(self, time_zone, expected_start_date):
+        """Test start dates for beta tester with NoneType days early"""
+        with patch(self.TIME_ZONE_FN_PATH) as time_zone_fn:
+            time_zone_fn.return_value = pytz.timezone(time_zone)
+
+            # Set start dates
+            xblock = self._set_up_start_date(dt.datetime(2014, 4, 6, 1, 1, 1))
+            self._set_up_days_early_for_beta(xblock, None)
+            self.assertEqual(xblock.xmodule_runtime.days_early_for_beta, None)
+
+            resp = self._render_xblock(xblock)
+            self.assertIn(expected_start_date, resp.body)
+
+    @ddt.data(('utc', '2014-05-01T00:00:00+00:00'),
+              ('America/Los_Angeles', '2014-05-01T00:00:00+00:00'))
+    @ddt.unpack
+    def test_formatted_end_dates_for_beta_tester_with_nonetype_days_early(self, time_zone, expected_end_date):
+        """Test end dates for beta tester with NoneType days early"""
+        with patch(self.TIME_ZONE_FN_PATH) as time_zone_fn:
+            time_zone_fn.return_value = pytz.timezone(time_zone)
+
+            # Set due dates
+            xblock = self._set_up_end_date(dt.datetime(2014, 5, 1))
+            self._set_up_days_early_for_beta(xblock, None)
+            self.assertEqual(xblock.xmodule_runtime.days_early_for_beta, None)
+
+            resp = self._render_xblock(xblock)
+            self.assertIn(expected_end_date, resp.body)
 
     @scenario('data/basic_scenario.xml', user_id='Bob')
     def test_default_fields(self, xblock):
@@ -254,6 +451,14 @@ class TestOpenAssessment(XBlockHandlerTestCase):
 
         xblock.prompts = [{'description': 'Prompt 4.'}, {'description': 'Prompt 5.'}]
         self.assertEqual(xblock.prompt, '[{"description": "Prompt 4."}, {"description": "Prompt 5."}]')
+
+    @scenario('data/neither_response_type.xml')
+    def test_no_response_type(self, xblock):
+        """
+        Ensure that legacy courses will still load properly.
+        """
+        self.assertEqual(xblock.text_response, 'required')
+
 
 class TestDates(XBlockHandlerTestCase):
 
@@ -494,6 +699,19 @@ class TestDates(XBlockHandlerTestCase):
         self.assertTrue(xblock.is_released())
 
     @scenario('data/basic_scenario.xml')
+    def test_is_released_published_scheduled(self, xblock):
+        # The scenario doesn't provide a start date, so `is_released()`
+        # should be controlled only by the published state which defaults to True
+        xblock.runtime.modulestore = MagicMock()
+        xblock.runtime.modulestore.has_published_version.return_value = True
+
+        # Set the start date one day ahead in the future (in UTC)
+        xblock.start = dt.datetime.utcnow().replace(tzinfo=pytz.utc) + dt.timedelta(days=1)
+
+        # Check that it is not yet released
+        self.assertFalse(xblock.is_released())
+
+    @scenario('data/basic_scenario.xml')
     def test_is_released_no_ms(self, xblock):
         self.assertTrue(xblock.is_released())
 
@@ -654,3 +872,20 @@ class TestDates(XBlockHandlerTestCase):
 
         if released is not None:
             self.assertEqual(xblock.is_released(step=step), released)
+
+    @scenario('data/basic_scenario.xml')
+    def test_get_username(self, xblock):
+        user = MagicMock()
+        user.username = "Bob"
+
+        xblock.xmodule_runtime = MagicMock()
+        xblock.xmodule_runtime.get_real_user.return_value = user
+
+        self.assertEqual('Bob', xblock.get_username('anon_id'))
+
+    @scenario('data/basic_scenario.xml')
+    def test_get_username_unknown_id(self, xblock):
+        xblock.xmodule_runtime = MagicMock()
+        xblock.xmodule_runtime.get_real_user.return_value = None
+
+        self.assertIsNone(xblock.get_username('unknown_id'))

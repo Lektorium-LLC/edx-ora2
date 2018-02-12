@@ -14,6 +14,9 @@ OpenAssessment.StudentTrainingView = function(element, server, baseView) {
     this.server = server;
     this.baseView = baseView;
     this.rubric = null;
+    this.isRendering = false;
+    this.announceStatus = false;
+    this.dateFactory = new OpenAssessment.DateTimeFactory(this.element);
 };
 
 OpenAssessment.StudentTrainingView.prototype = {
@@ -21,14 +24,22 @@ OpenAssessment.StudentTrainingView.prototype = {
     /**
     Load the student training view.
     **/
-    load: function() {
+    load: function(usageID) {
         var view = this;
+        var stepID = '.step--student-training';
+        var focusID = "[id='oa_training_" + usageID + "']";
+        view.isRendering = true;
         this.server.render('student_training').done(
             function(html) {
                 // Load the HTML and install event handlers
-                $('#openassessment__student-training', view.element).replaceWith(html);
-                view.server.renderLatex($('#openassessment__student-training', view.element));
+                $(stepID, view.element).replaceWith(html);
+                view.isRendering = false;
+                view.server.renderLatex($(stepID, view.element));
                 view.installHandlers();
+
+                view.baseView.announceStatusChangeToSRandFocus(stepID, usageID, false, view, focusID);
+                view.announceStatus = false;
+                view.dateFactory.apply();
             }
         ).fail(function() {
             view.baseView.showLoadError('student-training');
@@ -39,14 +50,14 @@ OpenAssessment.StudentTrainingView.prototype = {
     Install event handlers for the view.
     **/
     installHandlers: function() {
-        var sel = $("#openassessment__student-training", this.element);
+        var sel = $(".step--student-training", this.element);
         var view = this;
 
         // Install a click handler for collapse/expand
         this.baseView.setUpCollapseExpand(sel);
 
         // Initialize the rubric
-        var rubricSelector = $("#student-training--001__assessment", this.element);
+        var rubricSelector = $(".student-training--001__assessment", this.element);
         if (rubricSelector.size() > 0) {
             var rubricElement = rubricSelector.get(0);
             this.rubric = new OpenAssessment.Rubric(rubricElement);
@@ -58,13 +69,14 @@ OpenAssessment.StudentTrainingView.prototype = {
         }
 
         // Install a click handler for submitting the assessment
-        sel.find('#student-training--001__assessment__submit').click(
+        sel.find('.student-training--001__assessment__submit').click(
             function(eventObject) {
                 // Override default form submission
                 eventObject.preventDefault();
 
                 // Handle the click
                 view.assess();
+                view.announceStatus = true;
             }
         );
     },
@@ -82,22 +94,28 @@ OpenAssessment.StudentTrainingView.prototype = {
         }
         var view = this;
         var baseView = this.baseView;
+        var usageID = baseView.getUsageID();
         this.server.trainingAssess(options).done(
             function(corrections) {
-                var incorrect = $("#openassessment__student-training--incorrect", view.element);
-                var instructions = $("#openassessment__student-training--instructions", view.element);
+                var incorrect = $(".openassessment__student-training--incorrect", view.element);
+                var instructions = $(".openassessment__student-training--instructions", view.element);
+                var $questionAnswers = $(".question__answers", view.rubric.element);
 
                 if (!view.rubric.showCorrections(corrections)) {
-                    view.load();
-                    baseView.loadAssessmentModules();
+                    view.load(usageID);
+                    baseView.loadAssessmentModules(usageID);
                     incorrect.addClass("is--hidden");
                     instructions.removeClass("is--hidden");
                 } else {
                     instructions.addClass("is--hidden");
                     incorrect.removeClass("is--hidden");
+                    $questionAnswers.each(function(index, answer) {
+                        var $notification = $(".step__message.message", view.rubric.element).not(".is--hidden");
+                        $(answer).attr('aria-describedby', $($notification[index]).attr('id'));
+                    });
+                    baseView.srReadTexts([gettext('Feedback available for selection.')]);
                 }
-
-                baseView.scrollToTop();
+                baseView.scrollToTop(".step--student-training");
             }
         ).fail(function(errMsg) {
             // Display the error
@@ -124,11 +142,6 @@ OpenAssessment.StudentTrainingView.prototype = {
      >> true
     **/
     assessButtonEnabled: function(isEnabled) {
-        var button = $('#student-training--001__assessment__submit', this.element);
-        if (typeof isEnabled === 'undefined') {
-            return !button.hasClass('is--disabled');
-        } else {
-            button.toggleClass('is--disabled', !isEnabled);
-        }
+        return this.baseView.buttonEnabled('.student-training--001__assessment__submit', isEnabled);
     }
 };

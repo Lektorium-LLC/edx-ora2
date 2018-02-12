@@ -1,6 +1,8 @@
 {
     "simple": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -45,14 +47,19 @@
                 "name": "self-assessment",
                 "start": "2014-04-01T00:00:00",
                 "due": "2014-06-01T00:00:00"
+            },
+            {
+                "name": "staff-assessment",
+                "required": false
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
                 "<assessment name=\"self-assessment\" start=\"2014-04-01T00:00:00\" due=\"2014-06-01T00:00:00\" />",
+                "<assessment name=\"staff-assessment\" required=\"False\" />",
             "</assessments>",
             "<prompts>",
                 "<prompt><description>Test prompt</description></prompt>",
@@ -74,6 +81,8 @@
 
     "promptless": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
         "start": null,
@@ -117,7 +126,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -143,6 +152,8 @@
 
     "empty_prompt": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -187,7 +198,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -213,6 +224,8 @@
 
     "multiple_prompts": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "[{\"description\": \"Test prompt 1.\"}, {\"description\": \"Test prompt 2.\"}]",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -257,7 +270,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -284,6 +297,8 @@
 
     "unicode": {
         "title": "ƒσσ",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Ṫëṡẗ ṗṛöṁṗẗ",
         "rubric_feedback_prompt": "†es† Feedbåck Prømp†",
         "rubric_feedback_default_text": "Ṫëṡẗ ḋëḟäüḷẗ ẗëẍẗ",
@@ -323,13 +338,18 @@
                 "due": "2014-03-01T00:00:00",
                 "must_grade": 5,
                 "must_be_graded_by": 3
+            },
+            {
+                "name": "staff-assessment",
+                "required": false
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>ƒσσ</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\"  start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
+                "<assessment name=\"staff-assessment\" required=\"False\" />",
             "</assessments>",
             "<prompts>",
                 "<prompt><description>Ṫëṡẗ ṗṛöṁṗẗ</description></prompt>",
@@ -351,6 +371,8 @@
 
     "empty_feedback_prompt": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "",
         "rubric_feedback_default_text": "Test default text...",
@@ -395,7 +417,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
                 "<title>Foo</title>",
                 "<assessments>",
                     "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -421,6 +443,8 @@
 
     "no_feedback_prompt": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": null,
         "rubric_feedback_default_text": null,
@@ -465,7 +489,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
                 "<title>Foo</title>",
                 "<assessments>",
                     "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -489,6 +513,8 @@
 
     "reverse_option_order": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -528,7 +554,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-06-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -553,6 +579,8 @@
 
     "reverse_criteria_order": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -605,7 +633,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-06-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -636,6 +664,8 @@
 
     "default_dates": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -682,7 +712,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -708,6 +738,8 @@
 
     "set_dates": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -752,7 +784,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment submission_due=\"2020-04-15T00:00:00\">",
+            "<openassessment text_response=\"required\" submission_due=\"2020-04-15T00:00:00\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -778,6 +810,8 @@
 
     "criterion_feedback_optional": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -823,7 +857,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -849,6 +883,8 @@
 
     "criterion_feedback_required": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -894,7 +930,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -920,6 +956,8 @@
 
     "student_training_no_examples": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -958,7 +996,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"student-training\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" />",
@@ -983,6 +1021,8 @@
 
     "student_training_one_example": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -1054,7 +1094,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"student-training\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\">",
@@ -1094,6 +1134,8 @@
 
     "student_training_multiple_examples": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -1188,7 +1230,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"student-training\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\">",
@@ -1235,8 +1277,10 @@
         ]
     },
 
-    "ai_peer_self": {
+    "ai_peer_self_staff": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -1302,10 +1346,14 @@
                 "name": "self-assessment",
                 "start": "2014-04-01T00:00:00",
                 "due": "2014-06-01T00:00:00"
+            },
+            {
+                "name": "staff-assessment",
+                "required": true
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"example-based-assessment\" algorithm_id=\"sample-algorithm-id\">",
@@ -1324,6 +1372,7 @@
                 "</assessment>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
                 "<assessment name=\"self-assessment\" start=\"2014-04-01T00:00:00\" due=\"2014-06-01T00:00:00\" />",
+                "<assessment name=\"staff-assessment\" required=\"True\" />",
             "</assessments>",
             "<prompts>",
                 "<prompt><description>Test prompt</description></prompt>",
@@ -1345,6 +1394,8 @@
 
     "file_upload_type_none": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -1385,7 +1436,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -1411,6 +1462,8 @@
 
     "file_upload_type_image": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "Test default text...",
@@ -1451,7 +1504,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment file_upload_type=\"image\">",
+            "<openassessment text_response=\"required\" file_upload_type=\"image\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -1477,6 +1530,8 @@
 
    "missing_labels": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "start": null,
@@ -1520,7 +1575,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -1545,6 +1600,8 @@
 
     "empty_feedback_default_text": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": "",
@@ -1589,7 +1646,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment file_upload_type=\"image\">",
+            "<openassessment text_response=\"required\" file_upload_type=\"image\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",
@@ -1615,6 +1672,8 @@
 
     "null_feedback_default_text": {
         "title": "Foo",
+        "text_response": "required",
+        "file_upload_response": null,
         "prompt": "Test prompt",
         "rubric_feedback_prompt": "Test Feedback Prompt",
         "rubric_feedback_default_text": null,
@@ -1658,7 +1717,7 @@
             }
         ],
         "expected_xml": [
-            "<openassessment>",
+            "<openassessment text_response=\"required\">",
             "<title>Foo</title>",
             "<assessments>",
                 "<assessment name=\"peer-assessment\" start=\"2014-02-27T09:46:28\" due=\"2014-03-01T00:00:00\" must_grade=\"5\" must_be_graded_by=\"3\" />",

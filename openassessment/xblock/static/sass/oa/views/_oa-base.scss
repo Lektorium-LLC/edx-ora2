@@ -29,6 +29,57 @@
     padding: 0;
   }
 
+  // --------------------
+  // overall actions
+  // --------------------
+  .list--actions {
+    margin-bottom: ($baseline-v/2);
+    @include text-align(center);
+
+    @include media($bp-ds) {
+      @include text-align(right);
+    }
+
+    @include media($bp-dm) {
+      @include text-align(right);
+    }
+
+    @include media($bp-dl) {
+      @include text-align(right);
+    }
+
+    @include media($bp-dx) {
+      @include text-align(right);
+    }
+
+    // STATE: actions has an error
+    &.has--error {
+
+      .message {
+        margin-bottom: $baseline-v;
+        @include text-align(left);
+      }
+    }
+
+    .action--submit {
+      @extend %btn--primary;
+      @extend %action-2;
+      @include margin-left($baseline-v/2);
+      margin-top: ($baseline-v/2);
+
+      .copy, .icon {
+        display: inline;
+      }
+
+      .icon {
+        @extend %icon-2;
+      }
+
+      .fa-caret-right:before {
+        @include transform(rotate(bidi-rotate-angle(0deg)));
+      }
+    }
+  }
 
   // --------------------
   // steps
@@ -46,24 +97,15 @@
       display: block;
       margin-bottom: ($baseline-v/2);
       width: 100%;
-
-      @include media($bp-dl) {
-        @include bidi-span-columns(8 of 12);
-        margin-bottom: 0;
-      }
-
-      @include media($bp-dx) {
-        @include bidi-span-columns(9 of 12);
-        margin-bottom: 0;
-      }
+      margin-bottom: 0;
 
       .step__counter, .wrapper--copy {
-        display: table-cell;
+        display: inline-block;
+        vertical-align: middle;
       }
 
       .wrapper--copy {
-        vertical-align: middle;
-
+        @include margin-left(($baseline-h/2));
         @include border-left(1px solid $color-decorative-tertiary);
         @include padding-left(($baseline-h/2));
 
@@ -81,8 +123,6 @@
       }
 
       .step__counter {
-        vertical-align: top;
-        @include padding-right(($baseline-h/2));
         display: none;
 
         // increment: show numbers using parent list counter
@@ -92,7 +132,7 @@
           display: none;
           content: counter(item, decimal);
           counter-increment: item;
-          color: $color-decorative-tertiary;
+          color: $copy-color;
         }
 
         @include media($bp-dm) {
@@ -129,44 +169,43 @@
 
       .step__label {
         @extend %t-superheading;
-        color: $heading-primary-color;
       }
 
       .step__deadline {
         @extend %hd-4;
-        color: $heading-secondary-color;
+        color: $heading-color;
       }
     }
 
     // step status
     .step__status {
-      display: inline-block;
+      display: inline;
       margin-top: ($baseline-v/4);
 
       @include media($bp-dm) {
         margin-top: 0;
         @include float(right);
         position: relative;
-        top: -($baseline-v*2);
+        top: -($baseline-v/2) - 2;
       }
 
       @include media($bp-dl) {
         margin-top: 0;
         @include float(right);
         position: relative;
-        top: -($baseline-v*2);
+        top: -($baseline-v/2) - 2;
       }
 
       @include media($bp-dx) {
         margin-top: 0;
         @include float(right);
         position: relative;
-        top: -($baseline-v*2);
+        top: -($baseline-v/2) - 2;
       }
 
       .step__status__value {
         border-radius: ($baseline-v/10);
-        padding: ($baseline-v/4) ($baseline-h/4);
+        padding: ($baseline-v/4)-1 ($baseline-h/4);
         background: $color-decorative-tertiary;
         position: relative;
 
@@ -200,10 +239,6 @@
       }
     }
 
-    .step__status__label {
-      @extend %text-sr;
-    }
-
     // step content wrapper
     .wrapper--step__content {
       margin-top: ($baseline-v/2);
@@ -221,7 +256,7 @@
     .step__instruction {
       @extend %copy-2;
       margin-bottom: $baseline-v;
-      color: $copy-secondary-color;
+      color: $copy-color;
     }
 
     // step content
@@ -237,55 +272,6 @@
       }
     }
 
-    // step actions
-    .step__actions {
-      margin-bottom: ($baseline-v/2);
-      @include text-align(center);
-
-      @include media($bp-ds) {
-        @include text-align(right);
-      }
-
-      @include media($bp-dm) {
-       @include text-align(right);
-      }
-
-      @include media($bp-dl) {
-        @include text-align(right);
-      }
-
-      @include media($bp-dx) {
-        @include text-align(right);
-      }
-
-      .action--submit {
-        @extend %btn--primary;
-        @extend %action-2;
-
-        .copy, .icon {
-          display: inline;
-        }
-
-        .icon {
-          @extend %icon-2;
-        }
-
-        .fa-caret-right:before {
-          @include transform(rotate(bidi-rotate-angle(0deg)));
-        }
-
-      }
-
-      // STATE: actions has an error
-      &.has--error {
-
-        .message {
-          margin-bottom: $baseline-v;
-          @include text-align(left);
-        }
-      }
-    }
-
     // STATE: step is loading
     &.is--loading {
 
@@ -296,7 +282,7 @@
       }
 
       .step__counter:before, .step__label, .step__deadline {
-        color: $color-unavailable;
+        color: $copy-color;
       }
 
       .step__status__value {
@@ -308,22 +294,12 @@
 
         .icon {
           display: inline-block;
-          color: $copy-secondary-color;
+          color: $copy-color;
         }
 
         .copy {
-          color: $copy-secondary-color;
+          color: $copy-color;
         }
-      }
-    }
-
-    // STATE: step is collapsed (not focused on)
-    &.is--collapsed {
-
-      .step__header {
-        padding-bottom: 0;
-        border-bottom: none;
-        margin-bottom: 0;
       }
     }
 
@@ -331,20 +307,16 @@
     &.is--incomplete {
 
       .step__counter:before {
-        border-color: rgba($color-incomplete, 0.5);
-        color: $color-incomplete;
+        border-color: $color-incomplete;
+        color: $copy-color;
       }
 
       .step__status__value {
         background: $color-incomplete;
 
         .copy, .icon {
-          color: $white-t;
+          color: $copy-color;
         }
-      }
-
-      .step__label {
-        color: $color-incomplete;
       }
     }
 
@@ -352,7 +324,7 @@
     &.is--unavailable {
 
       .step__counter:before, .step__label, .step__deadline {
-        color: $color-unavailable;
+        color: $copy-color;
       }
 
       .step__status__value {
@@ -360,11 +332,11 @@
 
         .icon {
           display: inline-block;
-          color: $copy-secondary-color;
+          color: $copy-color;
         }
 
         .copy {
-          color: $copy-secondary-color;
+          color: $copy-color;
         }
       }
     }
@@ -373,7 +345,7 @@
     &.is--waiting {
 
       .step__counter:before, .step__label, .step__deadline {
-        color: $color-unavailable;
+        color: $copy-color;
       }
 
       .step__status__value {
@@ -381,11 +353,11 @@
 
         .icon {
           display: inline-block;
-          color: $copy-secondary-color;
+          color: $copy-color;
         }
 
         .copy {
-          color: $copy-secondary-color;
+          color: $copy-color;
         }
       }
 
@@ -394,7 +366,7 @@
       }
 
       .step__instruction, .grade__value__description {
-        color: $copy-secondary-color;
+        color: $copy-color;
       }
     }
 
@@ -413,8 +385,36 @@
         }
 
         .copy, .icon {
-          color: $white-t;
+          color: $copy-inverse-color;
         }
+      }
+
+      button {
+        opacity: 1;
+      }
+    }
+
+    // STATE: in-progress
+    &.is--in-progress {
+
+      .step__counter:before {
+        color: $action-primary-color;
+      }
+
+      .step__status__value {
+        background: $action-primary-color;
+
+        .icon {
+          display: inline-block;
+        }
+
+        .copy, .icon {
+          color: $copy-inverse-color;
+        }
+      }
+
+      button {
+        opacity: 1;
       }
     }
 
@@ -430,45 +430,84 @@
         background: $color-error;
 
         .copy, .icon {
-          color: $white-t;
+          color: $copy-inverse-color;
         }
       }
 
       .step__label {
         color: $color-error;
       }
+    }
+  }
 
-      .message {
 
+  // --------------------
+  // ui-slidable
+  // --------------------
+  .ui-slidable__container {
+    .ui-slidable__content {
+      width: 100%;
+    }
+
+    // If there is an icon, it should rotate when clicked
+    @include transition(color $tmg-f2 ease-in);
+    .icon {
+      @include transition(all $tmg-f2 ease-in-out 0s);
+      @include transform(rotate(bidi-rotate-angle(0deg)));
+    }
+
+    &.is--initially--collapsed  {
+      .ui-slidable__content {
+        display: none;
+      }
+    }
+
+    &.is--showing {
+      .ui-slidable .icon {
+        @include transform(rotate(bidi-rotate-angle(90deg)));
+        @include transform-origin(50% 50%);
+      }
+
+      .ui-slidable__container {
+        &:not(.is--showing) {
+          .icon {
+            @include transition(all $tmg-f2 ease-in-out 0s);
+            @include transform(rotate(bidi-rotate-angle(0deg)));
+          }
+        }
+      }
+    }
+
+    .ui-slidable {
+      // Override default button styling.
+      @extend %btn-reset;
+      background: none;
+      border-radius: ($baseline-v/4);
+      padding: 0px;
+
+      &:active, &:focus:not(:disabled), &:hover:not(:disabled) {
+        background: none;
+        border: none;
+        box-shadow: none;
+      }
+
+      &:not([disabled]) {
+        color: $action-primary-color;
+
+        &:hover, &:focus {
+          color: $action-primary-color-focus;
+        }
+      }
+
+      .wrapper--copy {
+        text-align: left;
       }
     }
   }
 
-
-  // --------------------
-  // collapse and expand styling for step labels
-  // --------------------
-  // TODO: clean this scope up
-  .ui-toggle-visibility .ui-toggle-visibility__control .step__label {
-    @include transition(color $tmg-f2 ease-in);
-    color: $action-primary-color;
-
-    &:hover, &:focus {
-      color: $action-primary-color-focus;
-    }
-
-    &:active, &.is--current {
-      color: $action-primary-color-active;
-    }
-  }
-
-
   // --------------------
   // submission
   // --------------------
-  .wrapper--openassessment__prompt {
-
-  }
 
   .submission__answer__part__prompt {
     @extend %ui-well;
@@ -500,10 +539,32 @@
     }
   }
 
-  div.submission__answer__part__text__value {
-    border: 1px solid $color-decorative-secondary;
-    background-color: $white-t;
-    padding: $baseline-v;
+  .submission__answer__part__text__title {
+    @extend %t-heading;
+  }
+
+
+  .submission__answer__part__text__value {
+    margin: ($baseline-v/2) 0;
+
+    &:not(textarea) {
+      border: 1px solid $color-decorative-secondary;
+      background-color: $white;
+      padding: $baseline-v;
+    }
+  }
+
+  .submission__file__description__label {
+    margin-bottom: 5px;
+  }
+
+  .submission__answer__file__block {
+    margin-bottom: 8px;
+  }
+
+  .submission__img__preview {
+    float: left;
+    margin-right: 10px;
   }
 
   // --------------------
@@ -519,70 +580,47 @@
     }
 
     .response__submission__content {
+      @extend %action-items;
+
       margin-bottom: $baseline-v;
 
       label {
         @extend %text-sr;
       }
 
-      textarea {
-        @extend %ui-content-longanswer;
-        min-height: ($baseline-v*10);
+      .files__descriptions {
+        display: none;
+
+        .submission__file__description {
+          padding-bottom: 10px;
+        }
+      }
+
+      .submission__answer__part__text {
+        textarea {
+          @extend %ui-content-longanswer;
+          min-height: ($baseline-v*10);
+        }
+      }
+
+      .submission__file__description {
+        textarea {
+          @extend %ui-content-longanswer;
+          min-height: ($baseline-v*4);
+          width: 70%;
+        }
       }
 
       .tip {
         @extend %t-score;
         padding: ($baseline-v/4) ($baseline-h/4);
         background: $color-decorative-secondary;
-        color: $white-t;
+        color: $copy-inverse-color;
       }
-    }
-
-    .response__submission__status {
-      display: inline-block;
-      vertical-align: middle;
-      @include margin-left(($baseline-h/4));
-    }
-
-    .response__submission__status__title {
-      @extend %t-score;
-      color: $action-secondary-color;
     }
 
     .response__submission__actions {
-
-      .action--save {
-        @extend %btn--secondary;
-        @extend %action-2;
-        display: block;
-        @include text-align(center);
-        margin-bottom: ($baseline-v/2);
-        min-width: 215px;
-
-        @include media($bp-ds) {
-          display: inline-block;
-          @include margin-right(($baseline-v/2));
-          margin-bottom: 0;
-        }
-
-        @include media($bp-dm) {
-          display: inline-block;
-          @include margin-right(($baseline-v/2));
-          margin-bottom: 0;
-        }
-
-        @include media($bp-dl) {
-          display: inline-block;
-          @include margin-right(($baseline-v/2));
-          margin-bottom: 0;
-        }
-
-        @include media($bp-dx) {
-          display: inline-block;
-          @include margin-right(($baseline-v/2));
-          margin-bottom: 0;
-        }
-      }
+      @extend %action-items
     }
   }
 
@@ -611,7 +649,7 @@
       .peer-assessment__display__title {
         @extend %t-heading;
         margin-bottom: ($baseline-v/2);
-        color: $heading-secondary-color;
+        color: $heading-color;
       }
     }
 
@@ -625,6 +663,7 @@
 
     // assessment form
     .peer-assessment__assessment {
+      @extend %action-items;
 
       // fields
       .assessment__fields {
@@ -679,7 +718,7 @@
     .self-assessment__display__title {
       @extend %t-heading;
       margin-bottom: ($baseline-v/2);
-      color: $heading-secondary-color;
+      color: $heading-color;
     }
 
     .self-assessment__display__response {
@@ -692,6 +731,7 @@
 
     // assessment form
     .self-assessment__assessment {
+      @extend %action-items;
 
       // fields
       .assessment__fields {
@@ -712,6 +752,15 @@
       // genereal feedback question
       .assessment__rubric__question--feedback {
 
+        .wrapper--input {
+          margin-top: $baseline-v;
+        }
+
+        .question__title__copy {
+          @include margin-left(0);
+          white-space: pre-wrap;
+        }
+
         textarea {
           @extend %ui-content-longanswer;
           min-height: ($baseline-v*5);
@@ -725,19 +774,6 @@
   // grade status
   // --------------------
   // TODO: clean this up - need to make sure counter doens't show when loading or in other states
-  #openassessment__grade {
-
-    .step__counter, .step__counter:before {
-      display: none;
-    }
-
-    .wrapper--copy {
-      @include margin-left(0);
-      @include border-left(none);
-      @include padding-left(0);
-    }
-  }
-
   .step--grade {
 
     .step__title {
@@ -761,6 +797,16 @@
         @include bidi-span-columns(12 of 12);
       }
 
+      .step__counter, .step__counter:before {
+        display: none;
+      }
+
+      .wrapper--copy {
+        @include margin-left(0);
+        @include border-left(none);
+        @include padding-left(0);
+      }
+
       .step__label, .grade__value {
         display: inline-block;
         vertical-align: middle;
@@ -772,7 +818,6 @@
 
       .grade__value__title {
         @extend %t-superheading;
-        color: $heading-primary-color;
 
         .grade__value__earned {
           @extend %t-strong;
@@ -821,7 +866,7 @@
   .submission__answer__display__title {
     @extend %t-heading;
     margin-bottom: ($baseline-v/2);
-    color: $heading-secondary-color;
+    color: $heading-color;
   }
 
   .submission__answer__display__content {
@@ -829,7 +874,6 @@
     @extend %ui-subsection-content;
 
     padding: ($baseline-v/2) ($baseline-h/4) $baseline-v ($baseline-h/4);
-    background: $color-decorative-quaternary;
     border-radius: ($baseline-v/10);
     list-style: none;
 
@@ -855,7 +899,7 @@
   .submission__peer-evaluations__title {
     @extend %t-heading;
     margin-bottom: ($baseline-v/2);
-    color: $heading-secondary-color;
+    color: $heading-color;
   }
 
   // rubric questions
@@ -881,13 +925,18 @@
       margin-bottom: $baseline-v;
       border-bottom: ($baseline-v/10) solid $heading-color;
       padding-bottom: ($baseline-v/4);
+
+      .icon {
+        @extend %icon-1;
+        display: inline-block;
+        vertical-align: middle;
+      }
     }
 
     .question__title__copy {
       @extend %t-heading;
       @include margin-left(($baseline-h/4));
       white-space: pre-wrap;
-      color: $heading-color;
     }
 
     .question__score {
@@ -898,18 +947,18 @@
 
     .question__score__value {
       @extend %t-strong;
-      color: $heading-primary-color;
+      color: $heading-color;
 
       &:after {
         content: "/";
         @include margin-left(($baseline-v/4));
-        color: $heading-secondary-color;
+        color: $heading-color;
       }
     }
 
     .question__score__potential {
       @extend %t-strong;
-      color: $heading-secondary-color;
+      color: $heading-color;
 
       .unit {
         @extend %t-strong;
@@ -964,13 +1013,18 @@
       @extend %t-strong;
       @extend %t-titlecase;
       display: block;
-      color: $heading-secondary-color;
+      color: $heading-color;
+
+      .answer__source__value-with-points {
+        @extend %t-score;
+        color: $heading-color;
+      }
     }
 
     .answer__value {
       display: block;
       margin-bottom: ($baseline-v/2);
-      color: $heading-primary-color;
+      color: $heading-color;
 
       .answer__value__raw {
         white-space: pre-wrap;
@@ -996,7 +1050,7 @@
     .answer__score, .answer__score__value {
       @extend %t-score;
       display: block;
-      color: $heading-primary-color;
+      color: $heading-color;
     }
   }
 
@@ -1031,6 +1085,10 @@
       margin-top: ($baseline-v/4);
     }
 
+    .action--save {
+      @extend %action-button
+    }
+
     .feedback {
       @extend %no-list;
       @extend %wipe-last-child;
@@ -1042,7 +1100,7 @@
       @extend %t-strong;
       @extend %t-titlecase;
       display: block;
-      color: $heading-secondary-color;
+      color: $heading-color;
     }
 
     .feedback__value {
@@ -1088,7 +1146,7 @@
   .submission__feedback__instructions {
     @extend %copy-2;
     margin-bottom: $baseline-v;
-    color: $copy-secondary-color;
+    color: $copy-color;
   }
 
   .submission__feedback__elements {
@@ -1122,24 +1180,14 @@
     @extend %ui-subsection-content;
     padding-top: 0;
 
-   .list--actions {
+    .list--actions {
       padding: 0;
-    }
-
-    .action--submit {
-      @extend %btn--secondary;
-      @extend %action-2;
-      @include margin-right(($baseline-v/2));
     }
   }
 
-  // --------------------
-  // STATE: incomplete
-  // --------------------
-
-
-  // --------------------
-  // STATE: waiting
-  // --------------------
-
+  .action--submit {
+    @extend %btn--secondary;
+    @extend %action-2;
+    @include margin-right(($baseline-v/2));
+  }
 }

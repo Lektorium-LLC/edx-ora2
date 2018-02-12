@@ -38,6 +38,9 @@ OpenAssessment.StudioView = function(runtime, element, server, data) {
     );
 
     // Initialize the settings tab view
+    var staffAssessmentView = new OpenAssessment.EditStaffAssessmentView(
+        $("#oa_staff_assessment_editor", this.element).get(0)
+    );
     var studentTrainingView = new OpenAssessment.EditStudentTrainingView(
         $("#oa_student_training_editor", this.element).get(0)
     );
@@ -51,6 +54,7 @@ OpenAssessment.StudioView = function(runtime, element, server, data) {
         $("#oa_ai_assessment_editor", this.element).get(0)
     );
     var assessmentLookupDictionary = {};
+    assessmentLookupDictionary[staffAssessmentView.getID()] = staffAssessmentView;
     assessmentLookupDictionary[studentTrainingView.getID()] = studentTrainingView;
     assessmentLookupDictionary[peerAssessmentView.getID()] = peerAssessmentView;
     assessmentLookupDictionary[selfAssessmentView.getID()] = selfAssessmentView;
@@ -191,6 +195,8 @@ OpenAssessment.StudioView.prototype = {
         this.runtime.notify('save', {state: 'start'});
 
         var view = this;
+        var fileUploadType = view.settingsView.fileUploadType();
+
         this.server.updateEditorContext({
             prompts: view.promptsView.promptsDefinition(),
             feedbackPrompt: view.rubricView.feedbackPrompt(),
@@ -200,7 +206,9 @@ OpenAssessment.StudioView.prototype = {
             submissionStart: view.settingsView.submissionStart(),
             submissionDue: view.settingsView.submissionDue(),
             assessments: view.settingsView.assessmentsDescription(),
-            fileUploadType: view.settingsView.fileUploadType(),
+            textResponse: view.settingsView.textResponseNecessity(),
+            fileUploadResponse: view.settingsView.fileUploadResponseNecessity(),
+            fileUploadType: fileUploadType !== '' ? fileUploadType : null,
             fileTypeWhiteList: view.settingsView.fileTypeWhiteList(),
             latexEnabled: view.settingsView.latexEnabled(),
             leaderboardNum: view.settingsView.leaderboardNum(),

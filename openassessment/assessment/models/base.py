@@ -573,7 +573,7 @@ class Assessment(models.Model):
         """
         assessments = list(assessments)  # Force us to read it all
         if not assessments:
-            return []
+            return {}
 
         # Generate a cache key that represents all the assessments we're being
         # asked to grab scores from (comma separated list of assessment IDs)
@@ -789,7 +789,6 @@ class AssessmentPart(models.Model):
         if len(missing_criteria) > 0:
             msg = u"Missing selections for criteria: {missing}".format(missing=missing_criteria)
             raise InvalidRubricSelection(msg)
-
 
     @classmethod
     def _check_all_criteria_assessed(cls, rubric_index, selected_criteria, criteria_feedback):

@@ -9,8 +9,6 @@ install-system:
 
 # not used by travis
 install-node:
-	sudo add-apt-repository -y ppa:chris-lea/node.js
-	sudo apt-get update -qq
 	sudo apt-get install -qq nodejs
 
 install-wheels:
@@ -28,15 +26,17 @@ install-nltk-data:
 
 
 STATIC_JS = openassessment/xblock/static/js
+STATIC_CSS = openassessment/xblock/static/css
 
-javascript:
-	node_modules/.bin/uglifyjs $(STATIC_JS)/src/oa_shared.js $(STATIC_JS)/src/*.js $(STATIC_JS)/src/lms/*.js > "$(STATIC_JS)/openassessment-lms.min.js"
-	node_modules/.bin/uglifyjs $(STATIC_JS)/src/oa_shared.js $(STATIC_JS)/src/*.js $(STATIC_JS)/src/studio/*.js > "$(STATIC_JS)/openassessment-studio.min.js"
-
+javascript: update-npm-requirements
+	node_modules/.bin/uglifyjs $(STATIC_JS)/src/oa_shared.js $(STATIC_JS)/src/*.js $(STATIC_JS)/src/lms/*.js $(STATIC_JS)/lib/backgrid/backgrid.min.js -c warnings=false > "$(STATIC_JS)/openassessment-lms.min.js"
+	node_modules/.bin/uglifyjs $(STATIC_JS)/src/oa_shared.js $(STATIC_JS)/src/*.js $(STATIC_JS)/src/studio/*.js $(STATIC_JS)/lib/backgrid/backgrid.min.js -c warnings=false > "$(STATIC_JS)/openassessment-studio.min.js"
 
 sass:
-	./scripts/sass.sh
+	python scripts/compile_sass.py
 
+verify-generated-files:
+	@git diff --quiet || (echo 'Modifications exist locally! Run `make javascript` or `make sass` to update bundled files.'; exit 1)
 
 install-test:
 	pip install -q -r requirements/test.txt
@@ -45,14 +45,15 @@ install-sys-requirements: install-system install-node
 	npm config set loglevel warn
 
 install-dev:
-	gem install sass
 	pip install -q -r requirements/dev.txt
 
 install: install-wheels install-python install-js install-nltk-data install-test install-dev javascript sass
 
 quality:
-	jshint openassessment/xblock/static/js/src -c .jshintrc --verbose
-	./node_modules/jscs/bin/jscs openassessment/xblock/static/js/src --verbose
+	./node_modules/.bin/jshint $(STATIC_JS)/src -c .jshintrc --verbose
+	./node_modules/jscs/bin/jscs $(STATIC_JS)/src --verbose
+	./scripts/run-pep8.sh
+	./scripts/run-pylint.sh
 
 test: quality test-python test-js
 
@@ -75,3 +76,8 @@ test-acceptance:
 
 test-a11y:
 	./scripts/test-acceptance.sh accessibility
+
+update-npm-requirements:
+	npm update --silent
+	cp ./node_modules/backgrid/lib/backgrid*.js $(STATIC_JS)/lib/backgrid/
+	cp ./node_modules/backgrid/lib/backgrid*.css $(STATIC_CSS)/lib/backgrid/

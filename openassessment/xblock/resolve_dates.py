@@ -46,10 +46,19 @@ def _parse_date(value, _):
         try:
             return parse_date(value).replace(tzinfo=pytz.utc)
         except ValueError:
-            raise InvalidDateFormat(_("'{date}' is an invalid date format. Make sure the date is formatted as YYYY-MM-DDTHH:MM:SS.").format(date=value))
+            raise InvalidDateFormat(
+                _("'{date}' is an invalid date format. Make sure the date is formatted as YYYY-MM-DDTHH:MM:SS.").format(
+                    date=value
+                )
+            )
 
     else:
         raise InvalidDateFormat(_("'{date}' must be a date string or datetime").format(date=value))
+
+
+def parse_date_value(date, _):
+    """ Public method for _parse_date """
+    return _parse_date(date, _)
 
 
 def resolve_dates(start, end, date_ranges, _):
@@ -121,8 +130,10 @@ def resolve_dates(start, end, date_ranges, _):
 
 
     Args:
-        start (str, ISO date format, or datetime): When the problem opens.  A value of None indicates that the problem is always open.
-        end (str, ISO date format, or datetime): When the problem closes.  A value of None indicates that the problem never closes.
+        start (str, ISO date format, or datetime): When the problem opens.
+            A value of None indicates that the problem is always open.
+        end (str, ISO date format, or datetime): When the problem closes.
+            A value of None indicates that the problem never closes.
         date_ranges (list of tuples): list of (start, end) ISO date string tuples indicating
             the start/end timestamps (date string or datetime) of each submission/assessment.
         _ (function): An i18n service function to use for retrieving the
@@ -194,8 +205,11 @@ def resolve_dates(start, end, date_ranges, _):
         step_end = _parse_date(step_end, _) if step_end is not None else prev_end
 
         if step_start < prev_start:
-            msg = _(u"This step's start date '{start}' cannot be earlier than the previous step's start date '{prev}'.").format(
-                start=step_start, prev=prev_start
+            msg = _(
+                u"This step's start date '{start}' cannot be earlier than the previous step's start date '{prev}'."
+            ).format(
+                start=step_start,
+                prev=prev_start,
             )
             raise DateValidationError(msg)
 

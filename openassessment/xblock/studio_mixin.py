@@ -10,6 +10,7 @@ from xml import UpdateFromXmlError
 from django.conf import settings
 from django.template import Context
 from django.template.loader import get_template
+from django.utils.translation import ugettext as _, ugettext_lazy
 from voluptuous import MultipleInvalid
 from xblock.core import XBlock
 from xblock.fields import List, Scope
@@ -17,7 +18,9 @@ from xblock.fragment import Fragment
 
 from openassessment.xblock.defaults import DEFAULT_EDITOR_ASSESSMENTS_ORDER, DEFAULT_RUBRIC_FEEDBACK_TEXT
 from openassessment.xblock.validation import validator
-from openassessment.xblock.data_conversion import create_rubric_dict, make_django_template_key, update_assessments_format
+from openassessment.xblock.data_conversion import (
+    create_rubric_dict, make_django_template_key, update_assessments_format
+)
 from openassessment.xblock.schema import EDITOR_UPDATE_SCHEMA
 from openassessment.xblock.resolve_dates import resolve_dates
 from openassessment.xblock.xml import serialize_examples_to_xml_str, parse_examples_from_xml_str
@@ -40,6 +43,12 @@ class StudioMixin(object):
             ]
         }
     ]
+
+    NECESSITY_OPTIONS = {
+        "required": ugettext_lazy("Required"),
+        "optional": ugettext_lazy("Optional"),
+        "": ugettext_lazy("None")
+    }
 
     # Since the XBlock problem definition contains only assessment
     # modules that are enabled, we need to keep track of the order
@@ -109,7 +118,7 @@ class StudioMixin(object):
 
         submission_start, submission_due = date_ranges[0]
         assessments = self._assessments_editor_context(date_ranges[1:])
-        editor_assessments_order = self._editor_assessments_order_context()
+        self.editor_assessments_order = self._editor_assessments_order_context()
 
         # Every rubric requires one criterion. If there is no criteria
         # configured for the XBlock, return one empty default criterion, with
@@ -133,13 +142,16 @@ class StudioMixin(object):
             'criteria': criteria,
             'feedbackprompt': self.rubric_feedback_prompt,
             'feedback_default_text': feedback_default_text,
+            'text_response': self.text_response if self.text_response  else '',
+            'file_upload_response': self.file_upload_response if self.file_upload_response else '',
+            'necessity_options': self.NECESSITY_OPTIONS,
             'file_upload_type': self.file_upload_type,
             'white_listed_file_types': self.white_listed_file_types_string,
             'allow_latex': self.allow_latex,
             'leaderboard_show': self.leaderboard_show,
             'editor_assessments_order': [
                 make_django_template_key(asmnt)
-                for asmnt in editor_assessments_order
+                for asmnt in self.editor_assessments_order
             ],
             'is_released': self.is_released(),
         }
@@ -170,9 +182,28 @@ class StudioMixin(object):
             return {'success': False, 'msg': self._('Error updating XBlock configuration')}
 
         # Check that the editor assessment order contains all the assessments.  We are more flexible on example-based.
-        if set(DEFAULT_EDITOR_ASSESSMENTS_ORDER) != (set(data['editor_assessments_order']) - {'example-based-assessment'}):
-            logger.exception('editor_assessments_order does not contain all expected assessment types')
-            return {'success': False, 'msg': self._('Error updating XBlock configuration')}
+        given_without_example_based = set(data['editor_assessments_order']) - {'example-based-assessment'}
+        if set(DEFAULT_EDITOR_ASSESSMENTS_ORDER) != given_without_example_based:
+            # Backwards compatibility: "staff-assessment" may not be present.
+            # If that is the only problem with this data, just add it manually and continue.
+            if set(DEFAULT_EDITOR_ASSESSMENTS_ORDER) == (
+                # Check the given set, minus example-based, plus staff
+                given_without_example_based | {'staff-assessment'}
+            ):
+                data['editor_assessments_order'].append('staff-assessment')
+                logger.info('Backwards compatibility: editor_assessments_order now contains staff-assessment')
+            else:
+                logger.exception('editor_assessments_order does not contain all expected assessment types')
+                return {'success': False, 'msg': self._('Error updating XBlock configuration')}
+
+        if not data['text_response'] and not data['file_upload_response']:
+            return {'success': False, 'msg': self._("Error: both text and file upload responses can't be disabled")}
+        if not data['text_response'] and data['file_upload_response'] == 'optional':
+            return {'success': False,
+                    'msg': self._("Error: in case if text response is disabled file upload response must be required")}
+        if not data['file_upload_response'] and data['text_response'] == 'optional':
+            return {'success': False,
+                    'msg': self._("Error: in case if file upload response is disabled text response must be required")}
 
         # Backwards compatibility: We used to treat "name" as both a user-facing label
         # and a unique identifier for criteria and options.
@@ -208,7 +239,6 @@ class StudioMixin(object):
                 for example in assessment['examples']:
                     example['answer'] = {'parts': [{'text': text} for text in example['answer']]}
 
-
         xblock_validator = validator(self, self._)
         success, msg = xblock_validator(
             create_rubric_dict(data['prompts'], data['criteria']),
@@ -232,8 +262,14 @@ class StudioMixin(object):
         self.rubric_feedback_default_text = data['feedback_default_text']
         self.submission_start = data['submission_start']
         self.submission_due = data['submission_due']
-        self.file_upload_type = data['file_upload_type']
-        self.white_listed_file_types_string = data['white_listed_file_types']
+        self.text_response = data['text_response']
+        self.file_upload_response = data['file_upload_response']
+        if data['file_upload_response']:
+            self.file_upload_type = data['file_upload_type']
+            self.white_listed_file_types_string = data['white_listed_file_types']
+        else:
+            self.file_upload_type = None
+            self.white_listed_file_types_string = None
         self.allow_latex = bool(data['allow_latex'])
         self.leaderboard_show = data['leaderboard_show']
 
@@ -339,30 +375,38 @@ class StudioMixin(object):
             list of assessment names
 
         """
-        order = copy.deepcopy(self.editor_assessments_order)
-        used_assessments = [asmnt['name'] for asmnt in self.valid_assessments]
-        default_editor_order = copy.deepcopy(DEFAULT_EDITOR_ASSESSMENTS_ORDER)
+        # Start with the default order, to pick up any assessment types that have been added
+        # since the user last saved their ordering.
+        effective_order = copy.deepcopy(DEFAULT_EDITOR_ASSESSMENTS_ORDER)
 
-        # Backwards compatibility:
         # If the problem already contains example-based assessment
-        # then allow the editor to display example-based assessments.
-        if 'example-based-assessment' in used_assessments:
-            default_editor_order.insert(0, 'example-based-assessment')
+        # then allow the editor to display example-based assessments,
+        # which is not included in the default
+        enabled_assessments = [asmnt['name'] for asmnt in self.valid_assessments]
+        if 'example-based-assessment' in enabled_assessments:
+            effective_order.insert(0, 'example-based-assessment')
 
-        # Backwards compatibility:
-        # If the editor assessments order doesn't match the problem order,
-        # fall back to the problem order.
-        # This handles the migration of problems created pre-authoring,
-        # which will have the default editor order.
-        problem_order_indices = [
-            order.index(asmnt_name) for asmnt_name in used_assessments
-            if asmnt_name in order
+        # Account for changes the user has made to the default order
+        user_order = copy.deepcopy(self.editor_assessments_order)
+        effective_order = self._subset_in_relative_order(effective_order, user_order)
+
+        # Account for inconsistencies between the user's order and the problems
+        # that are currently enabled in the problem (These cannot be changed)
+        enabled_ordered_assessments = [
+            assessment for assessment in enabled_assessments if assessment in user_order
         ]
-        if problem_order_indices != sorted(problem_order_indices):
-            unused_assessments = list(set(default_editor_order) - set(used_assessments))
-            return sorted(unused_assessments) + used_assessments
+        effective_order = self._subset_in_relative_order(effective_order, enabled_ordered_assessments)
 
-        # Forwards compatibility:
-        # Include any additional assessments that may have been added since the problem was created.
-        else:
-            return order + list(set(default_editor_order) - set(order))
+        return effective_order
+
+    def _subset_in_relative_order(self, superset, subset):
+        """
+        Returns a copy of superset, with entries that appear in subset being reordered to match
+        their relative ordering in subset.
+        """
+        superset_indices = [superset.index(item) for item in subset]
+        sorted_superset_indices = sorted(superset_indices)
+        if superset_indices != sorted_superset_indices:
+            for i in range(len(sorted_superset_indices)):
+                superset[sorted_superset_indices[i]] = subset[i]
+        return superset

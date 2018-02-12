@@ -51,6 +51,7 @@ describe("OpenAssessment.EditSettingsView", function() {
     var SELF = "oa_self_assessment_editor";
     var AI = "oa_ai_assessment_editor";
     var TRAINING = "oa_student_training_editor";
+    var STAFF = "oa_staff_assessment_editor";
 
     beforeEach(function() {
         // Load the DOM fixture
@@ -62,6 +63,7 @@ describe("OpenAssessment.EditSettingsView", function() {
         assessmentViews[PEER] = new StubView("peer-assessment", "Peer assessment description");
         assessmentViews[AI] = new StubView("ai-assessment", "Example Based assessment description");
         assessmentViews[TRAINING] = new StubView("student-training", "Student Training description");
+        assessmentViews[STAFF] = new StubView("staff-assessment", "Staff assessment description");
 
         // mock data from backend
         data = {
@@ -91,14 +93,19 @@ describe("OpenAssessment.EditSettingsView", function() {
     });
 
     it("sets and loads the file upload state", function() {
+        view.fileUploadResponseNecessity('optional', true);
         view.fileUploadType('image');
         expect(view.fileUploadType()).toBe('image');
         view.fileUploadType('pdf-and-image');
         expect(view.fileUploadType()).toBe('pdf-and-image');
         view.fileUploadType('custom');
         expect(view.fileUploadType()).toBe('custom');
-        view.fileUploadType('');
+
+        view.fileUploadResponseNecessity('', true);
         expect(view.fileUploadType()).toBe('');
+
+        view.fileUploadResponseNecessity('required', true);
+        expect(view.fileUploadType()).toBe('custom');
     });
 
     it("sets and loads the file type white list", function() {
@@ -126,6 +133,7 @@ describe("OpenAssessment.EditSettingsView", function() {
         assessmentViews[SELF].isEnabled(false);
         assessmentViews[AI].isEnabled(false);
         assessmentViews[TRAINING].isEnabled(false);
+        assessmentViews[STAFF].isEnabled(false);
         expect(view.assessmentsDescription()).toEqual([]);
 
         // Enable the first assessment only
@@ -239,6 +247,8 @@ describe("OpenAssessment.EditSettingsView", function() {
     });
 
     it("validates file upload type and white list fields", function() {
+        view.fileUploadResponseNecessity('optional', true);
+
         view.fileUploadType("image");
         expect(view.validate()).toBe(true);
         expect(view.validationErrors().length).toBe(0);
